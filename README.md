@@ -32,7 +32,7 @@ use FormToEmail\Enum\FieldRole;
 use FormToEmail\Mail\PHPMailerAdapter;
 use FormToEmail\Http\FormToEmailController;
 
-$form = (new FormDefinition())
+$form = new FormDefinition()
   ->add(new FieldDefinition('name', [FieldRole::SenderName], [new RequiredRule()]))
   ->add(new FieldDefinition('email', [FieldRole::SenderEmail], [new RequiredRule(), new EmailRule()]))
   ->add(new FieldDefinition('message', [FieldRole::Body], [new RequiredRule()]));
@@ -46,7 +46,7 @@ $mailer = new PHPMailerAdapter(
   fromName: 'Website Contact Form'
 );
 
-(new FormToEmailController($form, $mailer, ['contact@example.com']))->handle();
+new FormToEmailController($form, $mailer, ['contact@example.com'])->handle();
 ```
 
 ## 🧠 Future roadmap

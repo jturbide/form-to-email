@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Http;
 
@@ -31,29 +31,26 @@ final class FormToEmailController
     public function __construct(
         private readonly FormDefinition $form,
         private readonly MailerAdapter $mailer,
-        
         /**
          * Destination email addresses (can include multiple).
          *
          * @var list<string>
          */
         private readonly array $recipients,
-        
         /**
          * Default subject line if none is provided via field roles.
          */
         private readonly string $defaultSubject = 'New Form Submission',
-        
         /**
          * Optional custom HTML template (with {{placeholders}}).
          */
         private readonly ?string $customHtmlTemplate = null,
-        
         /**
          * Optional custom plain text template (with {{placeholders}}).
          */
         private readonly ?string $customTextTemplate = null,
-    ) {}
+    ) {
+    }
     
     /**
      * Handles a request in a test- or CLI-safe way.
@@ -77,7 +74,7 @@ final class FormToEmailController
         }
         
         $body = $rawBody ?? file_get_contents('php://input');
-        $input = json_decode($body === false? '' : $body, true);
+        $input = json_decode($body === false ? '' : $body, true);
         if (!is_array($input)) {
             return ['code' => ResponseCode::INVALID_JSON->value];
         }

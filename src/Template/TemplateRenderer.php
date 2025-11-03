@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Template;
 
@@ -66,6 +66,7 @@ final class TemplateRenderer
         
         foreach ($data as $key => $value) {
             $rows .= sprintf(
+                // phpcs:ignore Generic.Files.LineLength
                 '<tr><th style="text-align:left;padding:8px 10px;background:#f8f9fa;border-bottom:1px solid #ddd;">%s</th><td style="padding:8px 10px;border-bottom:1px solid #eee;">%s</td></tr>',
                 htmlspecialchars($key, ENT_QUOTES, 'UTF-8'),
                 nl2br(htmlspecialchars($value, ENT_QUOTES, 'UTF-8'))

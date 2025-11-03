@@ -15,7 +15,7 @@ final class ValidationTest extends TestCase
 {
     public function testValidDataPassesValidation(): void
     {
-        $form = (new FormDefinition())
+        $form = new FormDefinition()
             ->add(new FieldDefinition('name', rules: [new RequiredRule(), new LengthRule(2, 50)]))
             ->add(new FieldDefinition('email', rules: [new RequiredRule(), new EmailRule()]));
         
@@ -28,7 +28,7 @@ final class ValidationTest extends TestCase
     
     public function testMissingRequiredFieldFails(): void
     {
-        $form = (new FormDefinition())
+        $form = new FormDefinition()
             ->add(new FieldDefinition('email', rules: [new RequiredRule()]));
         
         $input = [];
@@ -40,7 +40,7 @@ final class ValidationTest extends TestCase
     
     public function testInvalidEmailProducesError(): void
     {
-        $form = (new FormDefinition())
+        $form = new FormDefinition()
             ->add(new FieldDefinition('email', rules: [new EmailRule()]));
         
         $input = ['email' => 'not-an-email'];

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Mail;
 
@@ -58,5 +58,6 @@ final readonly class MailPayload
         public string $textBody,
         public ?string $replyToEmail = null,
         public ?string $replyToName = null,
-    ) {}
+    ) {
+    }
 }

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Validation\Rules;
 
@@ -35,12 +35,12 @@ final class RegexRule implements Rule
          * Example: `/^[A-Za-z]+$/u`
          */
         private readonly string $pattern,
-        
         /**
          * Error code to return if the pattern does not match.
          */
         private readonly string $error = 'invalid_format',
-    ) {}
+    ) {
+    }
     
     /**
      * @inheritDoc

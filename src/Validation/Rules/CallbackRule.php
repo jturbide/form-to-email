@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Validation\Rules;
 
@@ -38,7 +38,8 @@ final class CallbackRule implements Rule
      */
     public function __construct(
         private readonly \Closure $validator
-    ) {}
+    ) {
+    }
     
     /**
      * @inheritDoc

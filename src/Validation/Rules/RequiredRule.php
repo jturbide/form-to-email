@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Validation\Rules;
 
@@ -35,7 +35,8 @@ final class RequiredRule implements Rule
          * if you want more contextual codes.
          */
         private readonly string $error = 'required'
-    ) {}
+    ) {
+    }
     
     /**
      * @inheritDoc

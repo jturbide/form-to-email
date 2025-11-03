@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Mail;
 
@@ -40,53 +40,45 @@ final class PHPMailerAdapter implements MailerAdapter
          * Whether to use SMTP (true) or PHP mail() (false).
          */
         private readonly bool $useSmtp = true,
-        
         /**
          * SMTP server hostname.
          */
         private readonly string $host = 'localhost',
-        
         /**
          * SMTP port (25, 465, or 587 are common).
          */
         private readonly int $port = 25,
-        
         /**
          * SMTP username for authentication (if enabled).
          */
         private readonly string $username = '',
-        
         /**
          * SMTP password for authentication (if enabled).
          */
         private readonly string $password = '',
-        
         /**
          * Encryption mode: '', 'ssl', or 'tls'.
          */
         private readonly string $encryption = '',
-        
         /**
          * Whether SMTP authentication is required.
          */
         private readonly bool $auth = false,
-        
         /**
          * PHPMailer debug level: 0 (off), 2 (verbose).
          */
         private readonly int $debug = 0,
-        
         /**
          * The "From" address for all outgoing messages.
          * If null, the adapter will use the reply-to email instead.
          */
         private readonly ?string $fromEmail = null,
-        
         /**
          * The display name associated with the "From" address.
          */
         private readonly string $fromName = 'Form Notification',
-    ) {}
+    ) {
+    }
     
     /**
      * @inheritDoc
@@ -133,8 +125,7 @@ final class PHPMailerAdapter implements MailerAdapter
             if (!$mail->send()) {
                 throw new \RuntimeException('PHPMailer send() returned false without exception.');
             }
-        }
-        catch (PHPMailerException $e) {
+        } catch (PHPMailerException $e) {
             throw new \RuntimeException(
                 sprintf('PHPMailer error: %s', $e->getMessage()),
                 previous: $e

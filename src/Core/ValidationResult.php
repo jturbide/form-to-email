@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Core;
 
@@ -49,7 +49,8 @@ final readonly class ValidationResult
         public bool $valid,
         public array $errors,
         public array $data,
-    ) {}
+    ) {
+    }
     
     /**
      * Convenience accessor for checking if validation failed.

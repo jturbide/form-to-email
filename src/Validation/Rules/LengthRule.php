@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Validation\Rules;
 
@@ -31,22 +31,20 @@ final class LengthRule implements Rule
          * Minimum allowed length (null = no minimum).
          */
         private readonly ?int $min = null,
-        
         /**
          * Maximum allowed length (null = no maximum).
          */
         private readonly ?int $max = null,
-        
         /**
          * Error code when value is shorter than $min.
          */
         private readonly string $tooShort = 'too_short',
-        
         /**
          * Error code when value is longer than $max.
          */
         private readonly string $tooLong = 'too_long',
-    ) {}
+    ) {
+    }
     
     /**
      * @inheritDoc

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Core;
 
@@ -51,5 +51,6 @@ final readonly class FieldDefinition
         public array $roles = [],
         public array $rules = [],
         public ?\Closure $sanitizer = null,
-    ) {}
+    ) {
+    }
 }

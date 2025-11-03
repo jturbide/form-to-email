@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 /**
  * form-to-email.php
@@ -29,7 +29,7 @@ use FormToEmail\Mail\PHPMailerAdapter;
 require __DIR__ . '/../vendor/autoload.php';
 
 // --- Define form schema ---
-$form = (new FormDefinition())
+$form = new FormDefinition()
     ->add(new FieldDefinition(
         name: 'name',
         roles: [FieldRole::SenderName],

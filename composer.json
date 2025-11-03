@@ -26,6 +26,7 @@
   },
   "require": {
     "php": ">=8.4",
+    "ext-mbstring": "*",
     "phpmailer/phpmailer": "^7.0.0"
   },
   "autoload": {
@@ -70,7 +71,7 @@
   "prefer-stable": true,
   "require-dev": {
     "phpunit/phpunit": "^12.4",
-    "slevomat/coding-standard": "^8.14"
+    "slevomat/coding-standard": "^8.24"
   },
   "config": {
     "allow-plugins": {

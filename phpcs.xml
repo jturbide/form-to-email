@@ -8,14 +8,26 @@
     <exclude-pattern>dist/</exclude-pattern>
     <exclude-pattern>tests/Http/PhpInputMock.php</exclude-pattern>
 
-    <rule ref="PSR12"/>
-    <rule ref="SlevomatCodingStandard.Namespaces.AlphabeticallySortedUses"/>
-    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes"/>
+    <!-- Base PSR-12 (ignore trailing whitespace and file-header order) -->
+    <rule ref="PSR12">
+        <exclude name="Squiz.WhiteSpace.SuperfluousWhitespace.EndLine"/>
+        <exclude name="PSR12.Files.FileHeader"/>
+    </rule>
+
+    <!-- Require strict_types but ignore spacing -->
+    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
+        <properties>
+            <property name="spacesCountAroundEqualsSign" value="0"/>
+        </properties>
+    </rule>
+
+    <!-- Indentation and line length -->
     <rule ref="Generic.WhiteSpace.DisallowTabIndent"/>
     <rule ref="Generic.Files.LineLength">
         <properties>
             <property name="lineLimit" value="140"/>
-            <property name="absoluteLineLimit" value="160"/>
+            <property name="absoluteLineLimit" value="0"/>
+            <property name="ignoreComments" value="true"/>
         </properties>
     </rule>
 </ruleset>

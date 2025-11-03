@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1);
+declare(strict_types=1);
 
 namespace FormToEmail\Validation\Rules;
 
@@ -32,7 +32,8 @@ final class EmailRule implements Rule
          * The error code returned when validation fails.
          */
         private readonly string $error = 'invalid_email'
-    ) {}
+    ) {
+    }
     
     /**
      * @inheritDoc
