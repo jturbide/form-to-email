@@ -53,6 +53,7 @@ Icon?
 /phpstan.neon.generated
 /psalm.xml.generated
 /.sonar/
+/.psalm/
 /reports/
 /docs/build/
 
