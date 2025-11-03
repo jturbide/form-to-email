@@ -1,0 +1,82 @@
+# =========================================================
+# Form-to-Email Library — Git Ignore Rules
+# =========================================================
+
+# --- Composer / PHP Build Artifacts ---
+/vendor/
+composer.lock
+
+# --- PHAR Build Output ---
+/dist/
+*.phar
+
+# --- Environment & Secrets ---
+.env
+.env.*
+!.env.test
+!.env.example
+
+# --- Logs & Cache ---
+/logs/
+/cache/
+/tmp/
+/storage/
+*.log
+
+# --- IDEs & Editors ---
+# PhpStorm / IntelliJ
+.idea/
+# VSCode
+.vscode/
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# --- OS / Filesystem Junk ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+Icon?
+*.swp
+*.bak
+*.orig
+*.tmp
+
+# --- PHPUnit / Code Coverage ---
+/coverage/
+/phpunit.xml.cache
+.phpunit.result.cache
+
+# --- Tools / Reports ---
+/.qodana/
+/phpstan.neon.generated
+/psalm.xml.generated
+/.sonar/
+/reports/
+/docs/build/
+
+# --- Build Scripts ---
+/build/
+build-phar.php
+
+# --- Node / Frontend (if applicable in monolith) ---
+/node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+/.vite/
+public/build/
+
+# --- Generated Documentation ---
+/docs/generated/
+/docs/api/
+/docs/html/
+
+# --- Custom temporary files ---
+*.local.php
+*.cache
+*.old
+
+# --- GitHub workflows cache ---
+/.github/workflows/cache/

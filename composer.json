@@ -1,0 +1,64 @@
+{
+  "name": "jturbide/form-to-email",
+  "description": "A lightweight PHP 8.4+ library to process form submissions, validate fields, and send structured email notifications with configurable templates and error codes.",
+  "type": "library",
+  "license": "BSD-3-Clause",
+  "keywords": [
+    "form",
+    "email",
+    "contact-form",
+    "phpmailer",
+    "validation",
+    "php84",
+    "microservice"
+  ],
+  "authors": [
+    {
+      "name": "Julien Turbide",
+      "email": "moi@jturbide.com",
+      "homepage": "https://www.julienturbide.com"
+    }
+  ],
+  "homepage": "https://github.com/jturbide/form-to-email",
+  "support": {
+    "issues": "https://github.com/jturbide/form-to-email/issues",
+    "source": "https://github.com/jturbide/form-to-email"
+  },
+  "require": {
+    "php": ">=8.4",
+    "phpmailer/phpmailer": "^7.0.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "FormToEmail\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "FormToEmail\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit --colors=always",
+    "build-phar": "php -d phar.readonly=0 ./build-phar.php"
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-main": "1.x-dev"
+    }
+  },
+  "archive": {
+    "exclude": [
+      "/tests",
+      "/docs",
+      "/examples",
+      "/.github",
+      "/build-phar.php"
+    ]
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "require-dev": {
+    "phpunit/phpunit": "^12.4"
+  }
+}
