@@ -6,8 +6,6 @@ parameters:
   excludePaths:
     - tests
     - vendor
-  checkGenericClassInNonGenericObjectType: false
-  checkMissingIterableValueType: true
   inferPrivatePropertyTypeFromConstructor: true
   checkUninitializedProperties: true
   treatPhpDocTypesAsCertain: true

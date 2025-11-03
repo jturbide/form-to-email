@@ -45,10 +45,15 @@ final class RegexRule implements Rule
     /**
      * @inheritDoc
      */
+    #[\Override]
     public function validate(string $value): array
     {
         // Empty string should be handled by RequiredRule if needed
         if ($value === '') {
+            return [];
+        }
+        
+        if ($this->pattern === '') {
             return [];
         }
         

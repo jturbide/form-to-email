@@ -58,7 +58,7 @@ final class FormToEmailController
     /**
      * Handles a request in a test- or CLI-safe way.
      *
-     * @param array|null  $server   Optional server globals override
+     * @param array<string, string>|null  $server   Optional server globals override
      * @param string|null $rawBody  Optional JSON body override
      *
      * @return array{code:string,errors?:array<string,list<string>>}
@@ -76,7 +76,8 @@ final class FormToEmailController
             return ['code' => ResponseCode::INVALID_METHOD->value];
         }
         
-        $input = json_decode($rawBody ?? file_get_contents('php://input'), true);
+        $body = $rawBody ?? file_get_contents('php://input');
+        $input = json_decode($body === false? '' : $body, true);
         if (!is_array($input)) {
             return ['code' => ResponseCode::INVALID_JSON->value];
         }
@@ -152,11 +153,11 @@ final class FormToEmailController
             ? implode(' - ', $subjectParts)
             : $this->defaultSubject;
         
-        $htmlBody = $this->customHtmlTemplate
+        $htmlBody = $this->customHtmlTemplate !== null
             ? TemplateRenderer::render($this->customHtmlTemplate, $data)
             : TemplateRenderer::defaultHtml($data, $subject);
         
-        $textBody = $this->customTextTemplate
+        $textBody = $this->customTextTemplate !== null
             ? TemplateRenderer::render($this->customTextTemplate, $data)
             : TemplateRenderer::defaultText($data, $subject);
         

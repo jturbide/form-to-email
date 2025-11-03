@@ -91,6 +91,7 @@ final class PHPMailerAdapter implements MailerAdapter
     /**
      * @inheritDoc
      */
+    #[\Override]
     public function send(MailPayload $payload): void
     {
         $mail = new PHPMailer(true);
@@ -113,7 +114,7 @@ final class PHPMailerAdapter implements MailerAdapter
             $mail->setFrom($fromAddress, $this->fromName);
             
             // Reply-To metadata
-            if ($payload->replyToEmail) {
+            if ($payload->replyToEmail !== null && $payload->replyToEmail !== '') {
                 $mail->addReplyTo($payload->replyToEmail, $payload->replyToName ?? '');
             }
             

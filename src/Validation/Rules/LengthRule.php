@@ -51,6 +51,7 @@ final class LengthRule implements Rule
     /**
      * @inheritDoc
      */
+    #[\Override]
     public function validate(string $value): array
     {
         // Allow empty strings (handled by RequiredRule if needed)

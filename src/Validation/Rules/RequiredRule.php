@@ -40,6 +40,7 @@ final class RequiredRule implements Rule
     /**
      * @inheritDoc
      */
+    #[\Override]
     public function validate(string $value): array
     {
         return trim($value) === '' ? [$this->error] : [];

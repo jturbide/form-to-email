@@ -37,6 +37,7 @@ final class EmailRule implements Rule
     /**
      * @inheritDoc
      */
+    #[\Override]
     public function validate(string $value): array
     {
         // Skip empty strings — RequiredRule should handle that

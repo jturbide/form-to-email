@@ -45,7 +45,7 @@ final class TemplateRenderer
         
         foreach ($data as $key => $value) {
             $search[] = '{{' . $key . '}}';
-            $replace[] = (string)$value;
+            $replace[] = $value;
         }
         
         return str_replace($search, $replace, $template);

@@ -33,7 +33,7 @@ use FormToEmail\Validation\Rule;
 final class CallbackRule implements Rule
 {
     /**
-     * @param callable(string):list<string> $validator
+     * @param \Closure(string):list<string> $validator
      * A callable that returns an array of error codes.
      */
     public function __construct(
@@ -43,12 +43,13 @@ final class CallbackRule implements Rule
     /**
      * @inheritDoc
      */
+    #[\Override]
     public function validate(string $value): array
     {
         /** @var list<string> $errors */
         $errors = ($this->validator)($value);
         
         // Ensure type safety — return an array of strings only
-        return array_values(array_filter($errors, static fn($e): bool => is_string($e) && $e !== ''));
+        return array_values(array_filter($errors, static fn(string $e): bool => $e !== ''));
     }
 }

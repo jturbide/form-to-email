@@ -43,7 +43,7 @@ final readonly class FieldDefinition
      * @param list<Rule> $rules
      *   Validation rules applied to the field.
      *
-     * @param null|callable(string):string $sanitizer
+     * @param ?\Closure(string):string $sanitizer
      *   Optional sanitizer applied after validation.
      */
     public function __construct(

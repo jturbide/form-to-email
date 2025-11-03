@@ -47,7 +47,7 @@ $form = (new FormDefinition())
             new RequiredRule(),
             new EmailRule(),
         ],
-        sanitizer: static fn(string $v) => filter_var($v, FILTER_SANITIZE_EMAIL)
+        sanitizer: static fn(string $v): string => filter_var($v, FILTER_SANITIZE_EMAIL) ?: '',
     ))
     ->add(new FieldDefinition(
         name: 'subject',
