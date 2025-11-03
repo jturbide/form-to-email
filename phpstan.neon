@@ -1,0 +1,13 @@
+parameters:
+  phpVersion: 80400
+  level: 8
+  paths:
+    - src
+  excludePaths:
+    - tests
+    - vendor
+  checkGenericClassInNonGenericObjectType: false
+  checkMissingIterableValueType: true
+  inferPrivatePropertyTypeFromConstructor: true
+  checkUninitializedProperties: true
+  treatPhpDocTypesAsCertain: true

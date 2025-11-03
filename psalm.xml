@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<psalm
+        errorLevel="2"
+        phpVersion="8.4"
+        resolveFromConfigFile="true"
+        findUnusedBaselineEntry="true"
+        findUnusedCode="false"
+        cacheDirectory=".psalm"
+>
+    <projectFiles>
+        <directory name="src"/>
+        <ignoreFiles>
+            <directory name="vendor"/>
+        </ignoreFiles>
+    </projectFiles>
+
+    <issueHandlers>
+        <!-- Allow TODOs but warn -->
+        <MissingReturnType errorLevel="info"/>
+        <MissingParamType errorLevel="info"/>
+    </issueHandlers>
+</psalm>
