@@ -92,13 +92,13 @@ final class PHPMailerAdapter implements MailerAdapter
             // --- Setup transport
             if ($this->useSmtp) {
                 $mail->isSMTP();
-                $mail->Host       = $this->host;
-                $mail->Port       = $this->port;
-                $mail->SMTPAuth   = $this->auth;
-                $mail->Username   = $this->username;
-                $mail->Password   = $this->password;
+                $mail->Host = $this->host;
+                $mail->Port = $this->port;
+                $mail->SMTPAuth = $this->auth;
+                $mail->Username = $this->username;
+                $mail->Password = $this->password;
                 $mail->SMTPSecure = $this->encryption ?: PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->SMTPDebug  = $this->debug;
+                $mail->SMTPDebug = $this->debug;
             }
             
             // --- Sender & recipients
@@ -118,7 +118,7 @@ final class PHPMailerAdapter implements MailerAdapter
             // --- Message content
             $mail->isHTML(true);
             $mail->Subject = $payload->subject;
-            $mail->Body    = $payload->htmlBody;
+            $mail->Body = $payload->htmlBody;
             $mail->AltBody = $payload->textBody;
             
             // --- Send
