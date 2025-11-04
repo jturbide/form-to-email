@@ -5,13 +5,13 @@
 ---
 
 ## ✨ Features
-- Multiple validators per field (regex, callback, built-in)
-- Per-field error arrays for rich frontend UX
-- Semantic field roles (e.g. SenderEmail, Subject, Body)
-- Default HTML + text email templates
-- PHPMailer adapter (easily swappable)
-- Enum-based structured API responses
-- Framework-agnostic (works in plain PHP, Symfony, Laravel, etc.)
+- [x] Multiple validators per field (regex, callback, built-in)
+- [x] Per-field error arrays for rich frontend UX
+- [x] Semantic field roles (e.g. SenderEmail, Subject, Body)
+- [x] Default HTML + text email templates
+- [x] PHPMailer adapter (easily swappable)
+- [x] Enum-based structured API responses
+- [x] Framework-agnostic (works in plain PHP, Symfony, Laravel, etc.)
 
 ---
 
@@ -51,11 +51,18 @@ new FormToEmailController($form, $mailer, ['contact@example.com'])->handle();
 
 ## 🧠 Future roadmap
 
-- Sender confirmation support
-- File upload attachments
-- reCAPTCHA integration
-- Webhook + API notifications
-- Rate limiting + IP throttling
+- [ ] Add sanitization filters
+- [ ] Add data transformers
+- [ ] Add spam protection
+- [ ] Log form submissions
+- [ ] Email delivery tracking
+- [ ] Sender confirmation support
+- [ ] File upload attachments
+- [ ] reCAPTCHA integration
+- [ ] Webhook + API notifications
+- [ ] Rate limiting + IP throttling
+- [ ] Add more Mailer adapters
+- [ ] Add more unit tests
 
 ## 🪪 License
 
