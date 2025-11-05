@@ -1,0 +1,76 @@
+name: Main CI
+
+on: [push, pull_request]
+
+env:
+  EXTENSIONS: intl, mbstring
+  EXTENSIONS_CACHE_KEY: php-ext-v1
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php:
+          - "8.4"
+        dependencies:
+          - "highest"
+
+    outputs:
+      cache-key: ${{ steps.composer-cache.outputs.key }}
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup cache environment
+        id: extcache
+        uses: shivammathur/cache-extensions@v1
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ${{ env.EXTENSIONS }}
+          key: ${{ env.EXTENSIONS_CACHE_KEY }}
+
+      - name: Cache PHP extensions
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.extcache.outputs.dir }}
+          key: ${{ steps.extcache.outputs.key }}
+          restore-keys: ${{ steps.extcache.outputs.key }}
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: ${{ env.EXTENSIONS }}
+          tools: composer, cs2pr, phpcs, phpstan, psalm, phpunit
+
+      - uses: ramsey/composer-install@v3
+        with:
+          dependency-versions: ${{ matrix.dependencies }}
+          composer-options: ${{ matrix.composer-options }}
+          custom-cache-suffix: zemit-composer
+
+      - name: PHP Code Sniffer
+        run: phpcs --standard=phpcs.xml -q --report=checkstyle | cs2pr --graceful-warnings
+
+      - name: PHP Stan
+        run: phpstan
+
+      - name: Psalm
+        run: |
+          psalm --config=psalm.xml \
+                 --output-format=sarif \
+                 --no-progress \
+                 --no-cache \
+                 --stats \
+                 --show-info=false \
+                 --threads=4 > psalm-results.sarif
+
+      - name: Upload Psalm results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: psalm-results.sarif
+
+      - name: PHP Unit
+        run: phpunit
