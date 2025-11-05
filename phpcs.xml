@@ -14,13 +14,6 @@
         <exclude name="PSR12.Files.FileHeader"/>
     </rule>
 
-    <!-- Require strict_types but ignore spacing -->
-    <rule ref="SlevomatCodingStandard.TypeHints.DeclareStrictTypes">
-        <properties>
-            <property name="spacesCountAroundEqualsSign" value="0"/>
-        </properties>
-    </rule>
-
     <!-- Indentation and line length -->
     <rule ref="Generic.WhiteSpace.DisallowTabIndent"/>
     <rule ref="Generic.Files.LineLength">

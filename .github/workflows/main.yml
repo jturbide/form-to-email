@@ -49,7 +49,7 @@ jobs:
         with:
           dependency-versions: ${{ matrix.dependencies }}
           composer-options: ${{ matrix.composer-options }}
-          custom-cache-suffix: zemit-composer
+          custom-cache-suffix: composer
 
       - name: PHP Code Sniffer
         run: phpcs --standard=phpcs.xml -q --report=checkstyle | cs2pr --graceful-warnings
