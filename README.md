@@ -8,25 +8,21 @@ Built for modern PHP projects with strict typing, predictable pipelines, and fra
 ## ✨ Core features
 
 ✅ **Field definitions & validation**
-
 * Multiple validators per field (regex, callable, or built-in rules)
 * Rich per-field error arrays for frontend UX
 * Enum-based field roles (`SenderEmail`, `Subject`, `Body`, etc.)
 * Composable rules: `RequiredRule`, `EmailRule`, `RegexRule`, `LengthRule`, etc.
 
-✅ **Processing pipeline (Filters → Transformers → Validators)**
-
+✅ **Processing pipeline from defined processors (Filters, Transformers, Validators)**
 * Unified `Processor` architecture combining filters, transformers, and rules
-* Automatic execution in the correct order: **sanitize → transform → validate**
+* Automatic execution in the defined processors: **sanitize, validate, transform**
 * Full per-field customization, reusable across forms
 * Supports pipeline chaining and early bailout on invalid data
 * Provides consistent and deterministic behavior between validation runs
 
 ✅ **Filters & sanitizers**
-
 * First-class sanitization layer (stackable filters)
 * Includes advanced built-ins:
-
     * `SanitizeEmailFilter` (RFC 6531/5321 aware, strict/relaxed, IDN-safe)
     * `RemoveEmojiFilter` (emoji + pictographic cleanup)
     * `NormalizeNewlinesFilter` (consistent `\n` normalization, optional trimming)
@@ -35,19 +31,16 @@ Built for modern PHP projects with strict typing, predictable pipelines, and fra
     * `CallbackFilter` (custom per-field logic, `callable(mixed, FieldDefinition): mixed`)
 
 ✅ **Transformers**
-
 * Modify values after sanitization but before validation
 * Examples: trimming, lowercasing, formatting, slugifying, normalizing phone numbers
 * Easily composable via the same pipeline system
 
 ✅ **Email composition**
-
 * Dual HTML + plain-text templates (customizable)
 * PHPMailer adapter (default) — easily replaceable with custom adapters
 * Enum-based structured responses (e.g. `ResponseCode::Success`, `ResponseCode::ValidationError`)
 
 ✅ **Architecture**
-
 * Framework-agnostic — works with plain PHP, Symfony, Laravel, or any custom stack
 * 100 % typed, static-analysis-clean (Psalm / PHPStan / Qodana / Sonar)
 * Complete PHPUnit coverage with 180+ tests (filters, transformers, rules, adapters)
@@ -83,6 +76,38 @@ $form = new FormDefinition()
     ->addRule(new EmailRule()))
   ->add((new FieldDefinition('message', [FieldRole::Body]))
     ->addRule(new RequiredRule()));
+
+$mailer = new PHPMailerAdapter(
+  useSmtp: true,
+  host: 'mail.example.com',
+  username: 'no-reply@example.com',
+  password: 'secret',
+  fromEmail: 'no-reply@example.com',
+  fromName: 'Website Contact Form'
+);
+
+new FormToEmailController($form, $mailer, ['contact@example.com'])->handle();
+```
+
+Example usage:
+```php
+$form = new FormDefinition()
+    ->add(new FieldDefinition('name', roles: [FieldRole::SenderName], processors: [
+        new TrimTransformer(), // trim leading/trailing spaces
+        new RequiredRule(), // required rule
+    ]))
+    ->add(new FieldDefinition('email', roles: [FieldRole::SenderEmail], processors: [
+        new SanitizeEmailFilter(), // sanitize email
+        new EmailRule(), // validate email
+        new LowercaseTransformer(), // lower case email
+    ]));
+    ->add(new FieldDefinition('message', roles: [FieldRole::Body], processors: [
+        new RemoveUrlFilter(), // remove url
+        new RemoveEmojiFilter(), // remove emoji
+        new StripTagsFilter(), // strip html tags
+        new RequiredRule(), // required rule
+        new HtmlEscapeFilter(), // encode html to prevent XSS
+    ]));
 
 $mailer = new PHPMailerAdapter(
   useSmtp: true,

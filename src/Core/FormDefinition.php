@@ -19,8 +19,8 @@ namespace FormToEmail\Core;
  * Example:
  * ```php
  * $form = (new FormDefinition())
- *     ->add(new FieldDefinition('name', roles: [FieldRole::SenderName], rules: [...]))
- *     ->add(new FieldDefinition('email', roles: [FieldRole::SenderEmail], rules: [...]));
+ *     ->add(new FieldDefinition('name', roles: [FieldRole::SenderName], processors: [...]))
+ *     ->add(new FieldDefinition('email', roles: [FieldRole::SenderEmail], processors: [...]));
  *
  * $result = $form->validate($_POST);
  *
