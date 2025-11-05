@@ -2,6 +2,10 @@ name: Main CI
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+  security-events: write
+
 env:
   EXTENSIONS: intl, mbstring
   EXTENSIONS_CACHE_KEY: php-ext-v1
