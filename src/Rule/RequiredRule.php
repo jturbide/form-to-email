@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace FormToEmail\Validation\Rules;
+namespace FormToEmail\Rule;
 
-use FormToEmail\Validation\Rule;
+use FormToEmail\Core\FieldDefinition;
 
 /**
  * Rule: RequiredRule
@@ -26,7 +26,7 @@ use FormToEmail\Validation\Rule;
  * $rule->validate('John');    // []
  * ```
  */
-final class RequiredRule implements Rule
+final class RequiredRule extends AbstractRule
 {
     public function __construct(
         /**
@@ -42,8 +42,20 @@ final class RequiredRule implements Rule
      * @inheritDoc
      */
     #[\Override]
-    public function validate(string $value): array
+    public function validate(mixed $value, FieldDefinition $field): array
     {
-        return trim($value) === '' ? [$this->error] : [];
+        if (is_array($value) && count($value)) {
+            return [];
+        }
+        
+        if (is_object($value)) {
+            return [];
+        }
+        
+        if (!empty(trim((string) $value ?? ''))) {
+            return [];
+        }
+        
+        return [$this->error];
     }
 }

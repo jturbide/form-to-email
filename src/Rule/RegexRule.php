@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace FormToEmail\Validation\Rules;
+namespace FormToEmail\Rule;
 
-use FormToEmail\Validation\Rule;
+use FormToEmail\Core\FieldDefinition;
 
 /**
  * Rule: RegexRule
@@ -27,7 +27,7 @@ use FormToEmail\Validation\Rule;
  * $rule->validate('123');  // ['invalid_letters']
  * ```
  */
-final class RegexRule implements Rule
+final class RegexRule extends AbstractRule
 {
     public function __construct(
         /**
@@ -46,7 +46,7 @@ final class RegexRule implements Rule
      * @inheritDoc
      */
     #[\Override]
-    public function validate(string $value): array
+    public function validate(string $value, FieldDefinition $field): array
     {
         // Empty string should be handled by RequiredRule if needed
         if ($value === '') {

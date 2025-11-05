@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace FormToEmail\Validation\Rules;
+namespace FormToEmail\Rule;
 
-use FormToEmail\Validation\Rule;
+use FormToEmail\Core\FieldDefinition;
 
 /**
  * Rule: EmailRule
@@ -25,7 +25,7 @@ use FormToEmail\Validation\Rule;
  * $rule->validate('invalid@@example'); // ['invalid_email']
  * ```
  */
-final class EmailRule implements Rule
+final class EmailRule extends AbstractRule
 {
     public function __construct(
         /**
@@ -39,7 +39,7 @@ final class EmailRule implements Rule
      * @inheritDoc
      */
     #[\Override]
-    public function validate(string $value): array
+    public function validate(string $value, FieldDefinition $field): array
     {
         // Skip empty strings — RequiredRule should handle that
         if ($value === '') {

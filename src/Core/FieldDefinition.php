@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace FormToEmail\Core;
 
 use FormToEmail\Enum\FieldRole;
-use FormToEmail\Validation\Rule;
+use FormToEmail\Filter\Filter;
+use FormToEmail\Rule\Rule;
 
 /**
  * Class: FieldDefinition
@@ -27,11 +28,11 @@ use FormToEmail\Validation\Rule;
  *     name: 'email',
  *     roles: [FieldRole::SenderEmail],
  *     rules: [new RequiredRule(), new EmailRule()],
- *     sanitizer: static fn(string $v) => filter_var($v, FILTER_SANITIZE_EMAIL)
+ *     sanitizer: [new LowercaseFilter(), new TrimFilter()]
  * );
  * ```
  */
-final readonly class FieldDefinition
+final class FieldDefinition
 {
     /**
      * @param string $name
@@ -40,17 +41,53 @@ final readonly class FieldDefinition
      * @param list<FieldRole> $roles
      *   Semantic roles describing how this field maps to email metadata.
      *
-     * @param list<Rule> $rules
-     *   Validation rules applied to the field.
-     *
-     * @param ?\Closure(string):string $sanitizer
-     *   Optional sanitizer applied after validation.
+     * @param list<FieldProcessor> $processors
+     *   Rules and filters to apply to the field
      */
     public function __construct(
         public string $name,
         public array $roles = [],
-        public array $rules = [],
-        public ?\Closure $sanitizer = null,
+        public array $processors = [],
     ) {
+    }
+    
+    public function getName(): string
+    {
+        return $this->name;
+    }
+    
+    public function getRoles(): array
+    {
+        return $this->roles;
+    }
+    
+    /**
+     * @return FieldProcessor[]
+     */
+    public function getProcessors(): array
+    {
+        return $this->processors;
+    }
+    
+    public function addProcessor(FieldProcessor $processor): self
+    {
+        $this->processors[] = $processor;
+        return $this;
+    }
+    
+    /**
+     * Convenience alias for adding a Filter
+     */
+    public function addFilter(Filter $filter): self
+    {
+        return $this->addProcessor($filter);
+    }
+    
+    /**
+     * Convenience alias for adding a Rule
+     */
+    public function addRule(Rule $rule): self
+    {
+        return $this->addProcessor($rule);
     }
 }

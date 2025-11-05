@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace FormToEmail\Tests\Http;
 
-use FormToEmail\Enum\FieldRole;
-use PHPUnit\Framework\TestCase;
-use FormToEmail\Http\FormToEmailController;
-use FormToEmail\Core\FormDefinition;
 use FormToEmail\Core\FieldDefinition;
-use FormToEmail\Validation\Rules\RequiredRule;
-use FormToEmail\Validation\Rules\EmailRule;
+use FormToEmail\Core\FormDefinition;
+use FormToEmail\Enum\FieldRole;
+use FormToEmail\Http\FormToEmailController;
+use FormToEmail\Rule\EmailRule;
+use FormToEmail\Rule\RequiredRule;
 use FormToEmail\Tests\Fake\FakeMailerAdapter;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Integration test for FormToEmailController.
@@ -23,11 +23,11 @@ final class FormToEmailControllerTest extends TestCase
     public function testControllerReturnsOkAndSendsEmail(): void
     {
         // Prepare a minimal valid form
-        $form = (new FormDefinition())
+        $form = new FormDefinition()
             ->add(new FieldDefinition(
                 'email',
                 roles: [FieldRole::SenderEmail],
-                rules: [new RequiredRule(), new EmailRule()]
+                processors: [new RequiredRule(), new EmailRule()]
             ));
         
         // Fake mailer avoids real SMTP
@@ -81,8 +81,8 @@ final class FormToEmailControllerTest extends TestCase
     
     public function testControllerReturnsValidationError(): void
     {
-        $form = (new FormDefinition())
-            ->add(new FieldDefinition('email', rules: [new RequiredRule(), new EmailRule()]));
+        $form = new FormDefinition()
+            ->add(new FieldDefinition('email', processors: [new RequiredRule(), new EmailRule()]));
         
         $mailer = new FakeMailerAdapter();
         $controller = new FormToEmailController($form, $mailer, ['contact@example.com']);

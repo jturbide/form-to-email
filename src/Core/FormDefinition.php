@@ -74,25 +74,19 @@ final class FormDefinition
         $data = [];
         
         foreach ($this->fields as $field) {
-            // Retrieve raw value and normalize it to a trimmed string
-            $raw = (string)($input[$field->name] ?? '');
-            $value = trim($raw);
-            
-            // Collect errors from all rules
+            $name = $field->getName();
+            $value = $input[$name] ?? null;
             $fieldErrors = [];
-            foreach ($field->rules as $rule) {
-                $fieldErrors = [...$fieldErrors, ...$rule->validate($value)];
+            
+            foreach ($field->getProcessors() as $processor) {
+                $value = $processor->process($value, $field, $fieldErrors);
             }
             
-            // If there are validation errors, record them
+            $data[$name] = $value;
+            
             if (!empty($fieldErrors)) {
-                $errors[$field->name] = $fieldErrors;
+                $errors[$name] = $fieldErrors;
             }
-            
-            // Always store sanitized or raw value
-            $data[$field->name] = $field->sanitizer
-                ? ($field->sanitizer)($value)
-                : $value;
         }
         
         // Return the immutable result object

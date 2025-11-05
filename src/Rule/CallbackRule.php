@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace FormToEmail\Validation\Rules;
+namespace FormToEmail\Rule;
 
-use FormToEmail\Validation\Rule;
+use FormToEmail\Core\FieldDefinition;
 
 /**
  * Rule: CallbackRule
@@ -30,7 +30,7 @@ use FormToEmail\Validation\Rule;
  * $rule->validate('Bob');   // ['must_start_with_A']
  * ```
  */
-final class CallbackRule implements Rule
+final class CallbackRule extends AbstractRule
 {
     /**
      * @param \Closure(string):list<string> $validator
@@ -45,7 +45,7 @@ final class CallbackRule implements Rule
      * @inheritDoc
      */
     #[\Override]
-    public function validate(string $value): array
+    public function validate(string $value, FieldDefinition $field): array
     {
         /** @var list<string> $errors */
         $errors = ($this->validator)($value);

@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
-namespace FormToEmail\Validation;
+namespace FormToEmail\Rule;
+
+use FormToEmail\Core\FieldDefinition;
+use FormToEmail\Core\FieldProcessor;
 
 /**
  * Interface: Rule
@@ -24,15 +27,16 @@ namespace FormToEmail\Validation;
  * $errors = $rule->validate('123'); // ['invalid_letters']
  * ```
  */
-interface Rule
+interface Rule extends FieldProcessor
 {
     /**
      * Validate a given value.
      *
      * @param string $value The raw (trimmed) input value.
+     * @param FieldDefinition $field The field definition being validated.
      *
      * @return list<string> A list of error identifiers.
      *                      Empty list means the rule passed successfully.
      */
-    public function validate(string $value): array;
+    public function validate(string $value, FieldDefinition $field): array;
 }

@@ -27,6 +27,7 @@
   "require": {
     "php": ">=8.4",
     "ext-mbstring": "*",
+    "ext-intl": "*",
     "phpmailer/phpmailer": "^7.0.0"
   },
   "autoload": {

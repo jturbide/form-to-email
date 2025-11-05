@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace FormToEmail\Validation\Rules;
+namespace FormToEmail\Rule;
 
-use FormToEmail\Validation\Rule;
+use FormToEmail\Core\FieldDefinition;
 
 /**
  * Rule: LengthRule
@@ -24,7 +24,7 @@ use FormToEmail\Validation\Rule;
  * $rule->validate('hello'); // []
  * ```
  */
-final class LengthRule implements Rule
+final class LengthRule extends AbstractRule
 {
     public function __construct(
         /**
@@ -50,7 +50,7 @@ final class LengthRule implements Rule
      * @inheritDoc
      */
     #[\Override]
-    public function validate(string $value): array
+    public function validate(string $value, FieldDefinition $field): array
     {
         // Allow empty strings (handled by RequiredRule if needed)
         if ($value === '') {

@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace FormToEmail\Tests\Core;
 
-use PHPUnit\Framework\TestCase;
-use FormToEmail\Core\FormDefinition;
 use FormToEmail\Core\FieldDefinition;
-use FormToEmail\Validation\Rules\RequiredRule;
-use FormToEmail\Validation\Rules\EmailRule;
-use FormToEmail\Validation\Rules\LengthRule;
+use FormToEmail\Core\FormDefinition;
+use FormToEmail\Rule\EmailRule;
+use FormToEmail\Rule\LengthRule;
+use FormToEmail\Rule\RequiredRule;
+use PHPUnit\Framework\TestCase;
 
 final class ValidationTest extends TestCase
 {
     public function testValidDataPassesValidation(): void
     {
         $form = new FormDefinition()
-            ->add(new FieldDefinition('name', rules: [new RequiredRule(), new LengthRule(2, 50)]))
-            ->add(new FieldDefinition('email', rules: [new RequiredRule(), new EmailRule()]));
+            ->add(new FieldDefinition('name', processors: [new RequiredRule(), new LengthRule(2, 50)]))
+            ->add(new FieldDefinition('email', processors: [new RequiredRule(), new EmailRule()]));
         
         $input = ['name' => 'Julien', 'email' => 'moi@jturbide.com'];
         $result = $form->validate($input);
@@ -29,7 +29,7 @@ final class ValidationTest extends TestCase
     public function testMissingRequiredFieldFails(): void
     {
         $form = new FormDefinition()
-            ->add(new FieldDefinition('email', rules: [new RequiredRule()]));
+            ->add(new FieldDefinition('email', processors: [new RequiredRule()]));
         
         $input = [];
         $result = $form->validate($input);
@@ -41,7 +41,7 @@ final class ValidationTest extends TestCase
     public function testInvalidEmailProducesError(): void
     {
         $form = new FormDefinition()
-            ->add(new FieldDefinition('email', rules: [new EmailRule()]));
+            ->add(new FieldDefinition('email', processors: [new EmailRule()]));
         
         $input = ['email' => 'not-an-email'];
         $result = $form->validate($input);

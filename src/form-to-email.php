@@ -14,16 +14,20 @@ declare(strict_types=1);
  * framework integration.
  */
 
-use FormToEmail\Core\FormDefinition;
 use FormToEmail\Core\FieldDefinition;
-use FormToEmail\Validation\Rules\RequiredRule;
-use FormToEmail\Validation\Rules\EmailRule;
-use FormToEmail\Validation\Rules\LengthRule;
-use FormToEmail\Validation\Rules\RegexRule;
-use FormToEmail\Validation\Rules\CallbackRule;
+use FormToEmail\Core\FormDefinition;
 use FormToEmail\Enum\FieldRole;
 use FormToEmail\Http\FormToEmailController;
 use FormToEmail\Mail\PHPMailerAdapter;
+use FormToEmail\Rule\CallbackRule;
+use FormToEmail\Rule\EmailRule;
+use FormToEmail\Rule\LengthRule;
+use FormToEmail\Rule\RegexRule;
+use FormToEmail\Rule\RequiredRule;
+use FormToEmail\Filter\StripTagsFilter;
+use FormToEmail\Filter\HtmlEscapeFilter;
+use FormToEmail\Filter\SanitizeEmailFilter;
+use FormToEmail\Filter\SanitizePhoneFilter;
 
 // --- Autoload dependencies ---
 require __DIR__ . '/../vendor/autoload.php';
@@ -33,40 +37,45 @@ $form = new FormDefinition()
     ->add(new FieldDefinition(
         name: 'name',
         roles: [FieldRole::SenderName],
-        rules: [
+        processors: [
             new RequiredRule(),
             new LengthRule(min: 2, max: 100),
-            new RegexRule('/^[\p{L}\s\-\'\.]+$/u', 'invalid_name')
+            new RegexRule('/^[\p{L}\s\-\'\.]+$/u', 'invalid_name'),
+            new StripTagsFilter(),
+            new HtmlEscapeFilter(),
         ],
-        sanitizer: static fn(string $v) => htmlspecialchars(strip_tags($v), ENT_QUOTES, 'UTF-8')
     ))
     ->add(new FieldDefinition(
         name: 'email',
         roles: [FieldRole::SenderEmail],
-        rules: [
+        processors: [
             new RequiredRule(),
             new EmailRule(),
+            new SanitizeEmailFilter(),
         ],
-        sanitizer: static fn(string $v): string => filter_var($v, FILTER_SANITIZE_EMAIL) ?: '',
     ))
     ->add(new FieldDefinition(
         name: 'subject',
         roles: [FieldRole::Subject],
-        rules: [new LengthRule(max: 200)],
-        sanitizer: static fn(string $v) => htmlspecialchars(strip_tags($v), ENT_QUOTES, 'UTF-8')
+        processors: [
+            new LengthRule(max: 200),
+            new StripTagsFilter(),
+            new HtmlEscapeFilter(),
+        ],
     ))
     ->add(new FieldDefinition(
         name: 'message',
         roles: [FieldRole::Body],
-        rules: [
+        processors: [
             new RequiredRule(),
-            new LengthRule(min: 10, max: 5000)
+            new LengthRule(min: 10, max: 5000),
+            new StripTagsFilter(),
+            new HtmlEscapeFilter(),
         ],
-        sanitizer: static fn(string $v) => htmlspecialchars(strip_tags($v), ENT_QUOTES, 'UTF-8')
     ))
     ->add(new FieldDefinition(
         name: 'phone',
-        rules: [
+        processors: [
             new CallbackRule(static function (string $v): array {
                 if ($v === '') {
                     return [];
@@ -75,8 +84,8 @@ $form = new FormDefinition()
                     ? []
                     : ['invalid_phone'];
             }),
+            new SanitizePhoneFilter()
         ],
-        sanitizer: static fn(string $v) => preg_replace('/[^\d\+\-\(\) ]/', '', $v) ?? ''
     ));
 
 // --- Configure mail transport ---
