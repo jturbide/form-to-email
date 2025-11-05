@@ -5,34 +5,22 @@ declare(strict_types=1);
 namespace FormToEmail\Core;
 
 /**
- * Class: FormDefinition
- *
  * Represents a complete form schema composed of multiple
  * {@see FieldDefinition} objects.
  *
+ * This version is context-driven: all validation and sanitization
+ * happens through a shared {@see FormContext}, giving processors
+ * access to the full form state.
+ *
  * Responsibilities:
- * - Store the schema of all defined fields.
- * - Validate incoming input arrays.
- * - Collect sanitized data and error codes.
- * - Return an immutable {@see ValidationResult}.
- *
- * Example:
- * ```php
- * $form = (new FormDefinition())
- *     ->add(new FieldDefinition('name', roles: [FieldRole::SenderName], processors: [...]))
- *     ->add(new FieldDefinition('email', roles: [FieldRole::SenderEmail], processors: [...]));
- *
- * $result = $form->validate($_POST);
- *
- * if ($result->valid) { ... }
- * ```
+ *  - Hold all field definitions
+ *  - Validate input through their processors
+ *  - Collect normalized data and structured errors
+ *  - Return an immutable {@see ValidationResult}
  */
 final class FormDefinition
 {
-    /**
-     * @var array<string, FieldDefinition>
-     * Internal registry of fields, indexed by field name.
-     */
+    /** @var array<string, FieldDefinition> */
     private array $fields = [];
     
     /**
@@ -42,13 +30,11 @@ final class FormDefinition
      */
     public function add(FieldDefinition $field): self
     {
-        $this->fields[$field->name] = $field;
+        $this->fields[$field->getName()] = $field;
         return $this;
     }
     
     /**
-     * Returns all field definitions as an associative array.
-     *
      * @return array<string, FieldDefinition>
      */
     public function fields(): array
@@ -57,41 +43,32 @@ final class FormDefinition
     }
     
     /**
-     * Validates the given input array against all field definitions.
+     * Validates an input payload against all field definitions.
      *
-     * Each field’s rules are evaluated in order.
-     * All errors are collected per field (no short-circuiting),
-     * and sanitizers are applied to values that pass validation.
-     *
-     * @param array<string, mixed> $input Raw input (e.g. decoded JSON or $_POST)
+     * @param array<string, mixed> $input Raw user input (e.g. $_POST / JSON)
      */
     public function validate(array $input): ValidationResult
     {
-        /** @var array<string, list<string>> $errors */
-        $errors = [];
+        // Shared state for the entire validation run
+        $context = new FormContext($input);
         
-        /** @var array<string, string> $data */
-        $data = [];
-        
+        // Run every field’s processors sequentially
         foreach ($this->fields as $field) {
             $name = $field->getName();
             $value = $input[$name] ?? null;
             
-            /** @var list<string> $fieldErrors */
-            $fieldErrors = [];
-            
             foreach ($field->getProcessors() as $processor) {
-                $value = $processor->process($value, $field, $fieldErrors);
+                $value = $processor->process($value, $field, $context);
             }
             
-            $data[$name] = $value;
-            
-            if (!empty($fieldErrors)) {
-                $errors[$name] = $fieldErrors;
-            }
+            // Always store the normalized value back into context
+            $context->setValue($name, $value);
         }
         
-        // Return the immutable result object
-        return new ValidationResult(valid: empty($errors), errors: $errors, data: $data);
+        return new ValidationResult(
+            valid: !$context->hasAnyErrors(),
+            errors: $context->allErrors(),
+            data: $context->allData(),
+        );
     }
 }
