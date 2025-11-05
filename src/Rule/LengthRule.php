@@ -50,7 +50,7 @@ final class LengthRule extends AbstractRule
      * @inheritDoc
      */
     #[\Override]
-    public function validate(string $value, FieldDefinition $field): array
+    public function validate(mixed $value, FieldDefinition $field): array
     {
         // Allow empty strings (handled by RequiredRule if needed)
         if ($value === '') {

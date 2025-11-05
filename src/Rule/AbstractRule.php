@@ -8,11 +8,13 @@ use FormToEmail\Core\FieldDefinition;
 
 abstract class AbstractRule implements Rule
 {
-    public function validate(string $value, FieldDefinition $field): array
+    #[\Override]
+    public function validate(mixed $value, FieldDefinition $field): array
     {
         return [];
     }
     
+    #[\Override]
     public function process(mixed $value, FieldDefinition $field, array &$errors): mixed
     {
         $fieldErrors = $this->validate($value, $field);

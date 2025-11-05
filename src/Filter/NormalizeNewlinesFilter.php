@@ -17,11 +17,12 @@ use FormToEmail\Core\FieldDefinition;
  * - Ensures consistent line endings across OSes
  * - Safe for plain text, markdown, or email templates
  */
-class NormalizeNewlinesFilter extends AbstractFilter
+final class NormalizeNewlinesFilter extends AbstractFilter
 {
     public function __construct(
         private readonly bool $ensureTrailingNewline = true
-    ) {}
+    ) {
+    }
     
     #[\Override]
     public function apply(mixed $value, FieldDefinition $field): mixed
@@ -34,7 +35,7 @@ class NormalizeNewlinesFilter extends AbstractFilter
         $normalized = str_replace(["\r\n", "\r"], "\n", $value);
         
         // Trim excessive trailing newlines (more than one)
-        $normalized = preg_replace('/\n{2,}$/', "\n", $normalized ?? '') ?? '';
+        $normalized = preg_replace('/\n{2,}$/', "\n", $normalized) ?? '';
         
         // Optionally ensure exactly one trailing newline
         if ($this->ensureTrailingNewline && !str_ends_with($normalized, "\n")) {

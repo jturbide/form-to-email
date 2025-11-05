@@ -16,7 +16,7 @@ use FormToEmail\Core\FieldDefinition;
  * Example:
  *   new CallbackFilter(fn($v) => str_replace('-', '', $v))
  */
-class CallbackFilter extends AbstractFilter
+final class CallbackFilter extends AbstractFilter
 {
     /**
      * @var Closure
@@ -24,9 +24,9 @@ class CallbackFilter extends AbstractFilter
     protected Closure $callback;
     
     /**
-     * @param callable(mixed, FieldDefinition): mixed $callback
+     * @param callable(mixed, FieldDefinition): mixed|Closure(mixed, FieldDefinition) : mixed $callback
      */
-    public function __construct(callable $callback)
+    public function __construct(callable|Closure $callback)
     {
         // Convert any callable into a Closure (first-class callable syntax)
         $this->callback = $callback instanceof Closure ? $callback : $callback(...);

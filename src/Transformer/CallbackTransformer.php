@@ -16,7 +16,7 @@ use FormToEmail\Core\FieldDefinition;
  * Example:
  *   new CallbackTransformer(fn($v) => str_replace('-', '', $v))
  */
-class CallbackTransformer extends AbstractTransformer
+final class CallbackTransformer extends AbstractTransformer
 {
     /**
      * @var Closure
@@ -24,7 +24,7 @@ class CallbackTransformer extends AbstractTransformer
     protected Closure $callback;
     
     /**
-     * @param callable(mixed, FieldDefinition): mixed $callback
+     * @param callable $callback
      */
     public function __construct(callable $callback)
     {

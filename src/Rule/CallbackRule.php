@@ -45,7 +45,7 @@ final class CallbackRule extends AbstractRule
      * @inheritDoc
      */
     #[\Override]
-    public function validate(string $value, FieldDefinition $field): array
+    public function validate(mixed $value, FieldDefinition $field): array
     {
         /** @var list<string> $errors */
         $errors = ($this->validator)($value);

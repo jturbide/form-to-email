@@ -18,11 +18,12 @@ use FormToEmail\Core\FieldDefinition;
  * - removeReplacementChar: removes U+FFFD ("�") characters that may appear when
  *   previous conversions replaced invalid bytes (enabled by default).
  */
-class SanitizeTextFilter extends AbstractFilter
+final class SanitizeTextFilter extends AbstractFilter
 {
     public function __construct(
         private readonly bool $removeReplacementChar = true
-    ) {}
+    ) {
+    }
     
     #[\Override]
     public function apply(mixed $value, FieldDefinition $field): mixed

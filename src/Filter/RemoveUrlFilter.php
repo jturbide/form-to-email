@@ -21,13 +21,14 @@ use Normalizer;
  *
  * Email addresses (user@example.com) are preserved.
  */
-class RemoveUrlFilter extends AbstractFilter
+final class RemoveUrlFilter extends AbstractFilter
 {
     public function __construct(
         private readonly bool $replaceWithPlaceholder = false,
         private readonly string $placeholder = '[link removed]',
         private readonly bool $aggressive = true,
-    ) {}
+    ) {
+    }
     
     #[\Override]
     public function apply(mixed $value, FieldDefinition $field): mixed
@@ -43,10 +44,10 @@ class RemoveUrlFilter extends AbstractFilter
         
         // In aggressive mode, replace common Unicode "dot" characters too
         if ($this->aggressive) {
-            $value = str_replace(["․", "。", "．"], ".", $value ?? '');
+            $value = str_replace(["․", "。", "．"], ".", $value);
             
             // Replace obfuscated separators like [dot] or (dot)
-            $value = preg_replace('/\s*(?:\[\.]|\(dot\)|\s+dot\s+)\s*/iu', '.', $value ?? '');
+            $value = preg_replace('/\s*(?:\[\.]|\(dot\)|\s+dot\s+)\s*/iu', '.', $value);
             
             // Convert hxxp:// spam to http://
             $value = preg_replace('/\bhxxp(s)?:\/\//iu', 'http$1://', $value ?? '');

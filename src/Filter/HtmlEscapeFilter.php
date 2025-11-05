@@ -17,13 +17,14 @@ use FormToEmail\Core\FieldDefinition;
  * - Optional prevention of double-encoding
  * - Supports custom charset
  */
-class HtmlEscapeFilter extends AbstractFilter
+final class HtmlEscapeFilter extends AbstractFilter
 {
     public function __construct(
         private readonly int $flags = ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5,
         private readonly string $encoding = 'UTF-8',
         private readonly bool $doubleEncode = true,
-    ) {}
+    ) {
+    }
     
     /**
      * @inheritDoc

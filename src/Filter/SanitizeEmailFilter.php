@@ -25,7 +25,8 @@ class SanitizeEmailFilter extends AbstractFilter
         private readonly bool $strict = true,
         private readonly bool $normalizeIdn = true,
         private readonly bool $normalizeCase = true
-    ) {}
+    ) {
+    }
     
     #[\Override]
     public function apply(mixed $value, FieldDefinition $field): mixed

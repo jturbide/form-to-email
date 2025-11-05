@@ -12,7 +12,7 @@ use FormToEmail\Core\FieldDefinition;
  * Removes any non-digit characters from phone number strings.
  * Keeps only 0–9 digits, ideal for standardized phone storage.
  */
-class SanitizePhoneFilter extends AbstractFilter
+final class SanitizePhoneFilter extends AbstractFilter
 {
     /**
      * @inheritDoc
@@ -25,7 +25,7 @@ class SanitizePhoneFilter extends AbstractFilter
         }
         
         // Remove all non-digit characters
-        $digits = preg_replace('/\D+/', '', $value ?? '');
+        $digits = preg_replace('/\D+/', '', $value);
         
         // Trim leading zeros if desired, but generally we keep them
         return $digits ?? '';

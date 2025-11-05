@@ -52,7 +52,7 @@ final class RequiredRule extends AbstractRule
             return [];
         }
         
-        if (!empty(trim((string) $value ?? ''))) {
+        if (!empty(trim((string)$value))) {
             return [];
         }
         

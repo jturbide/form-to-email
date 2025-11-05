@@ -10,7 +10,7 @@ use FormToEmail\Core\FieldDefinition;
  * Removes leading and trailing whitespace from string values.
  * Supports Unicode-aware trimming and direction modes (left, right, both).
  */
-class TrimFilter extends AbstractFilter
+final class TrimFilter extends AbstractFilter
 {
     private const UNICODE_PATTERNS = [
         'both' => '/^[\p{Z}\p{C}]+|[\p{Z}\p{C}]+$/u',

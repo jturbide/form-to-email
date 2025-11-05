@@ -43,6 +43,7 @@ abstract class AbstractTransformer implements Transformer
      *
      * @return mixed The sanitized or transformed value.
      */
+    #[\Override]
     abstract public function apply(mixed $value, FieldDefinition $field): mixed;
     
     /**
@@ -61,6 +62,7 @@ abstract class AbstractTransformer implements Transformer
             : $value;
     }
     
+    #[\Override]
     public function process(mixed $value, FieldDefinition $field, array &$errors): mixed
     {
         return $this->transform($value, $field);

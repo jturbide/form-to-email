@@ -46,7 +46,7 @@ final class RegexRule extends AbstractRule
      * @inheritDoc
      */
     #[\Override]
-    public function validate(string $value, FieldDefinition $field): array
+    public function validate(mixed $value, FieldDefinition $field): array
     {
         // Empty string should be handled by RequiredRule if needed
         if ($value === '') {

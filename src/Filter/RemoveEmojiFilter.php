@@ -17,7 +17,7 @@ use FormToEmail\Core\FieldDefinition;
  * - Removes flag symbols (1F1E6–1F1FF)
  * - Collapses residual spacing without trimming intentional spacing
  */
-class RemoveEmojiFilter extends AbstractFilter
+final class RemoveEmojiFilter extends AbstractFilter
 {
     #[\Override]
     public function apply(mixed $value, FieldDefinition $field): mixed
@@ -38,7 +38,7 @@ class RemoveEmojiFilter extends AbstractFilter
             . '\x{FE0F}'            // Variation selector-16
             . ']/u';
         
-        $clean = preg_replace($pattern, '', $value ?? '');
+        $clean = preg_replace($pattern, '', $value);
         
         // Collapse multiple spaces and remove space before punctuation
         $clean = preg_replace('/\s{2,}/u', ' ', $clean ?? '');

@@ -39,7 +39,7 @@ final class EmailRule extends AbstractRule
      * @inheritDoc
      */
     #[\Override]
-    public function validate(string $value, FieldDefinition $field): array
+    public function validate(mixed $value, FieldDefinition $field): array
     {
         // Skip empty strings — RequiredRule should handle that
         if ($value === '') {

@@ -14,11 +14,12 @@ use FormToEmail\Core\FieldDefinition;
  * - Option to disable Unicode mode for legacy or performance
  * - Skips non-string values
  */
-class LowercaseTransformer extends AbstractTransformer
+final class LowercaseTransformer extends AbstractTransformer
 {
     public function __construct(
         private readonly bool $unicodeAware = true
-    ) {}
+    ) {
+    }
     
     #[\Override]
     public function apply(mixed $value, FieldDefinition $field): mixed

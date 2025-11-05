@@ -16,7 +16,7 @@ use FormToEmail\Core\FieldDefinition;
  * (including their content), as these are never safe
  * in user-submitted content.
  */
-class StripTagsFilter extends AbstractFilter
+final class StripTagsFilter extends AbstractFilter
 {
     /**
      * @param string[] $allowedTags List of allowed HTML tags, e.g. ['<b>', '<i>'].
@@ -37,6 +37,6 @@ class StripTagsFilter extends AbstractFilter
         $value = preg_replace('#<(script|style)\b[^>]*>.*?</\1>#is', '', $value);
         
         // Apply built-in strip_tags with allowed list
-        return strip_tags($value, implode('', $this->allowedTags));
+        return is_null($value) || $value === '' ? $value : strip_tags($value, implode('', $this->allowedTags));
     }
 }
