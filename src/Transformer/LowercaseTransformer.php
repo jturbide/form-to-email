@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FormToEmail\Transformer;
 
 use FormToEmail\Core\FieldDefinition;
+use FormToEmail\Core\FormContext;
 
 /**
  * Converts string values to lowercase.
@@ -22,7 +23,7 @@ final class LowercaseTransformer extends AbstractTransformer
     }
     
     #[\Override]
-    public function apply(mixed $value, FieldDefinition $field): mixed
+    public function apply(mixed $value, FieldDefinition $field, FormContext $context): mixed
     {
         if (!is_string($value)) {
             return $value;

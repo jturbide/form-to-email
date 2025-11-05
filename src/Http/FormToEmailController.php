@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace FormToEmail\Http;
 
+use FormToEmail\Core\ErrorDefinition;
+use FormToEmail\Core\ErrorFactory;
 use FormToEmail\Core\FormDefinition;
+use FormToEmail\Core\ValidationError;
 use FormToEmail\Core\ValidationResult;
 use FormToEmail\Enum\FieldRole;
 use FormToEmail\Enum\ResponseCode;
@@ -15,7 +18,7 @@ use FormToEmail\Template\TemplateRenderer;
 /**
  * Class: FormToEmailController
  *
- * The central coordinator that:
+ * Central coordinator that:
  *  - Parses incoming form data (JSON or POST),
  *  - Runs validation using {@see FormDefinition},
  *  - Renders email templates (HTML + text),
@@ -23,8 +26,8 @@ use FormToEmail\Template\TemplateRenderer;
  *  - Returns a structured JSON response with a stable {@see ResponseCode}.
  *
  * Designed for both:
- *  - Production HTTP entrypoints (via handle())
- *  - Unit tests or internal calls (via handleRequest())
+ *  - Production HTTP entrypoints (via {@see handle()})
+ *  - Unit tests or internal calls (via {@see handleRequest()})
  */
 final class FormToEmailController
 {
@@ -55,10 +58,13 @@ final class FormToEmailController
     /**
      * Handles a request in a test- or CLI-safe way.
      *
-     * @param array<string, string>|null  $server   Optional server globals override
-     * @param string|null $rawBody  Optional JSON body override
+     * @param array<string, string>|null $server   Optional server globals override
+     * @param string|null                $rawBody  Optional JSON body override
      *
-     * @return array{code:string,errors?:array<string,list<string>>}
+     * @return array{
+     *     code: string,
+     *     errors?: array<string, list<ValidationError>>
+     * }
      */
     public function handleRequest(?array $server = null, ?string $rawBody = null): array
     {
@@ -83,7 +89,7 @@ final class FormToEmailController
         if ($result->failed()) {
             return [
                 'code' => ResponseCode::VALIDATION_ERROR->value,
-                'errors' => $result->errors,
+                'errors' => $result->allErrors(),
             ];
         }
         
@@ -127,7 +133,7 @@ final class FormToEmailController
         $data = $result->data;
         
         $replyToEmail = null;
-        $replyToName  = null;
+        $replyToName = null;
         $subjectParts = [];
         
         foreach ($this->form->fields() as $field) {
@@ -139,8 +145,8 @@ final class FormToEmailController
             foreach ($field->roles as $role) {
                 match ($role) {
                     FieldRole::SenderEmail => $replyToEmail = $value,
-                    FieldRole::SenderName  => $replyToName  = $value,
-                    FieldRole::Subject     => $subjectParts[] = $value,
+                    FieldRole::SenderName => $replyToName = $value,
+                    FieldRole::Subject => $subjectParts[] = $value,
                     default => null,
                 };
             }

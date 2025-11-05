@@ -195,6 +195,7 @@ $field->addTransformer(fn($v) => preg_replace('/\s+/', ' ', $v));
 * [ ] Add webhook + API notifications
 * [ ] Add rate limiting & IP throttling
 * [ ] Add more Mailer adapters (e.g. Symfony, AWS SES, Postmark)
+* [ ] Add a “SmartEmailRule” version next (with MX/DNS deliverability)
 
 ---
 

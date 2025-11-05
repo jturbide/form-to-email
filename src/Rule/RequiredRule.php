@@ -4,58 +4,89 @@ declare(strict_types=1);
 
 namespace FormToEmail\Rule;
 
+use FormToEmail\Core\ErrorDefinition;
 use FormToEmail\Core\FieldDefinition;
 
 /**
  * Rule: RequiredRule
  *
- * Ensures that the input value is not empty.
+ * Ensures that a value is present and non-empty.
  *
- * This rule simply checks whether a trimmed string is empty.
- * It's often the first rule applied to mandatory fields such as
- * name, email, or message.
+ * This rule treats as *empty*:
+ *  - `null`
+ *  - empty string (`""`) after optional trimming
+ *  - empty array (`[]`)
+ *  - `false`
  *
- * Since your project avoids direct human-readable messages on
- * the backend, this rule returns a single standardized code:
- * `"required"`.
+ * Everything else (including `0`, `"0"`, or non-empty arrays) is valid.
  *
- * Example:
+ * # Example
+ *
  * ```php
  * $rule = new RequiredRule();
- * $rule->validate('');        // ['required']
- * $rule->validate('John');    // []
+ * $rule->validate('', $field);   // → [ErrorDefinition('required')]
+ * $rule->validate('John', $field); // → []
  * ```
  */
-final class RequiredRule extends AbstractRule
+final readonly class RequiredRule extends AbstractRule
 {
+    /**
+     * @param string $errorCode  Stable identifier (default: `'required'`)
+     * @param string $message    Default message (can include `{field}` placeholder)
+     * @param bool   $trim       Whether to trim strings before checking emptiness
+     */
     public function __construct(
-        /**
-         * The error code returned when validation fails.
-         * Defaults to `'required'`, but can be overridden
-         * if you want more contextual codes.
-         */
-        private readonly string $error = 'required'
+        private string $errorCode = 'required',
+        private string $message = 'The field "{field}" is required.',
+        private bool $trim = true,
     ) {
     }
     
     /**
      * @inheritDoc
+     *
+     * @return list<ErrorDefinition>
      */
     #[\Override]
-    public function validate(mixed $value, FieldDefinition $field): array
+    protected function validate(mixed $value, FieldDefinition $field): array
     {
-        if (is_array($value) && count($value)) {
-            return [];
+        // Null → empty
+        if ($value === null) {
+            return [$this->makeError($field)];
         }
         
-        if (is_object($value)) {
-            return [];
+        // Boolean false → empty
+        if ($value === false) {
+            return [$this->makeError($field)];
         }
         
-        if (!empty(trim((string)$value))) {
-            return [];
+        // Empty array → empty
+        if (is_array($value) && count($value) === 0) {
+            return [$this->makeError($field)];
         }
         
-        return [$this->error];
+        // String check (optionally trimmed)
+        if (is_string($value)) {
+            $checked = $this->trim ? trim($value) : $value;
+            if ($checked === '') {
+                return [$this->makeError($field)];
+            }
+        }
+        
+        // Objects or non-empty values pass
+        return [];
+    }
+    
+    /**
+     * Create a structured ErrorDefinition for this rule.
+     */
+    private function makeError(FieldDefinition $field): ErrorDefinition
+    {
+        return new ErrorDefinition(
+            code: $this->errorCode,
+            message: $this->message,
+            context: ['field' => $field->getName()],
+            field: $field->getName()
+        );
     }
 }

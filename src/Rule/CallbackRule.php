@@ -4,53 +4,113 @@ declare(strict_types=1);
 
 namespace FormToEmail\Rule;
 
+use Closure;
+use FormToEmail\Core\ErrorDefinition;
 use FormToEmail\Core\FieldDefinition;
+use FormToEmail\Core\FormContext;
 
 /**
  * Rule: CallbackRule
  *
- * Provides the most flexible validation mechanism by allowing
- * developers to define custom logic using a PHP callable or closure.
+ * Provides a highly flexible, developer-defined validation mechanism.
+ * Accepts any callable returning string codes or {@see ErrorDefinition} instances.
  *
- * The callback receives the input value and must return a list
- * of error codes (strings). Returning an empty list indicates success.
- *
- * This rule can be used for:
- * - Complex validation (e.g., domain-specific formats)
- * - External checks (e.g., verifying tokens or captchas)
- * - Conditional validation (based on environment or context)
+ * The callback signature supports:
+ *  - (mixed $value)
+ *  - (mixed $value, FieldDefinition $field)
+ *  - (mixed $value, FieldDefinition $field, FormContext $context)
  *
  * Example:
  * ```php
- * $rule = new CallbackRule(static function (string $value): array {
- *     return str_starts_with($value, 'A') ? [] : ['must_start_with_A'];
- * });
- *
- * $rule->validate('Alice'); // []
- * $rule->validate('Bob');   // ['must_start_with_A']
+ * $rule = new CallbackRule(
+ *     static fn(string $v): array => str_starts_with($v, 'A') ? [] : ['must_start_with_A']
+ * );
  * ```
  */
-final class CallbackRule extends AbstractRule
+final readonly class CallbackRule extends AbstractRule
 {
-    /**
-     * @param \Closure(string):list<string> $validator
-     * A callable that returns an array of error codes.
-     */
     public function __construct(
-        private readonly \Closure $validator
+        private Closure $validator,
     ) {
     }
     
     /**
-     * @inheritDoc
+     * Fallback for compatibility with validation-only calls (no context).
+     *
+     * @return list<ErrorDefinition>
      */
     #[\Override]
-    public function validate(mixed $value, FieldDefinition $field): array
+    protected function validate(mixed $value, FieldDefinition $field): array
     {
-        /** @var list<string> $errors */
-        $errors = ($this->validator)($value);
+        $ctx = new FormContext([$field->getName() => $value]);
         
-        // Ensure type safety — return an array of strings only
-        return array_values(array_filter($errors, static fn(string $e): bool => $e !== ''));
+        /** @var mixed $result */
+        $result = ($this->validator)($value, $field, $ctx);
+        
+        if (!is_array($result)) {
+            throw new \UnexpectedValueException(
+                sprintf('CallbackRule validator must return an array, got %s', get_debug_type($result))
+            );
+        }
+        
+        /** @var list<ErrorDefinition> $errors */
+        $errors = [];
+        
+        foreach ($result as $err) {
+            if (is_string($err)) {
+                $errors[] = new ErrorDefinition(
+                    code: $err,
+                    message: ucfirst(str_replace('_', ' ', $err)),
+                    context: ['field' => $field->getName()],
+                    field: $field->getName()
+                );
+            } elseif ($err instanceof ErrorDefinition) {
+                $errors[] = $err;
+            } else {
+                throw new \UnexpectedValueException(
+                    sprintf('Invalid error type returned by CallbackRule: %s', get_debug_type($err))
+                );
+            }
+        }
+        
+        return $errors;
+    }
+    
+    /**
+     * Full context-aware process version.
+     */
+    #[\Override]
+    public function process(mixed $value, FieldDefinition $field, FormContext $context): mixed
+    {
+        /** @var mixed $result */
+        $result = ($this->validator)($value, $field, $context);
+        
+        if (!is_array($result)) {
+            throw new \UnexpectedValueException(
+                sprintf('CallbackRule validator must return an array, got %s', get_debug_type($result))
+            );
+        }
+        
+        foreach ($result as $err) {
+            if (is_string($err)) {
+                $context->addError(
+                    $field->getName(),
+                    new ErrorDefinition(
+                        code: $err,
+                        message: ucfirst(str_replace('_', ' ', $err)),
+                        context: ['field' => $field->getName()],
+                        field: $field->getName()
+                    )
+                );
+            } elseif ($err instanceof ErrorDefinition) {
+                $context->addError($field->getName(), $err);
+            } else {
+                throw new \UnexpectedValueException(
+                    sprintf('Invalid error type returned by CallbackRule: %s', get_debug_type($err))
+                );
+            }
+        }
+        
+        return $value;
     }
 }

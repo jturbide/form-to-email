@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace FormToEmail\Rule;
 
+use FormToEmail\Core\ErrorDefinition;
 use FormToEmail\Core\FieldDefinition;
 use FormToEmail\Core\FieldProcessor;
 
@@ -35,8 +36,8 @@ interface Rule extends FieldProcessor
      * @param mixed $value The raw input value.
      * @param FieldDefinition $field The field definition being validated.
      *
-     * @return list<string> A list of error identifiers.
-     *                      Empty list means the rule passed successfully.
+     * @return list<string|ErrorDefinition> A list of error identifiers.
+     *                                      Empty list means the rule passed successfully.
      */
     public function validate(mixed $value, FieldDefinition $field): array;
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace FormToEmail\Tests\Transformer;
 
 use FormToEmail\Core\FieldDefinition;
+use FormToEmail\Core\FormContext;
 use FormToEmail\Transformer\CallbackTransformer;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -15,11 +16,13 @@ use PHPUnit\Framework\TestCase;
 final class CallbackTransformerTest extends TestCase
 {
     private FieldDefinition $field;
+    private FormContext $context;
     
     protected function setUp(): void
     {
         parent::setUp();
         $this->field = new FieldDefinition('name');
+        $this->context = new FormContext();
     }
     
     // -------------------------------------------------
@@ -30,7 +33,7 @@ final class CallbackTransformerTest extends TestCase
     public function testExecutesVariousCallableTypes(callable $callback, mixed $input, mixed $expected): void
     {
         $transformer = new CallbackTransformer($callback);
-        $result = $transformer->apply($input, $this->field);
+        $result = $transformer->apply($input, $this->field, $this->context);
         
         $this->assertSame($expected, $result);
     }
@@ -46,7 +49,7 @@ final class CallbackTransformerTest extends TestCase
         
         return [
             'closure lowercase' => [
-                fn ($v) => strtolower((string)$v),
+                fn($v) => strtolower((string)$v),
                 'ABC',
                 'abc',
             ],
@@ -56,13 +59,13 @@ final class CallbackTransformerTest extends TestCase
                 'hello-world',
             ],
             'callable ignoring field arg' => [
-                fn ($v) => "value:{$v}",
+                fn($v) => "value:{$v}",
                 'X',
                 'value:X',
             ],
             'callable handling field arg' => [
-                function ($v, FieldDefinition $f) {
-                    return strtoupper($v) . '-' . $f->getName();
+                function ($v, FieldDefinition $f): string {
+                    return strtoupper((string)$v) . '-' . $f->getName();
                 },
                 'abc',
                 'ABC-name',
@@ -78,14 +81,17 @@ final class CallbackTransformerTest extends TestCase
     {
         $called = false;
         
-        $transformer = new CallbackTransformer(function ($value, FieldDefinition $field) use (&$called) {
-            $called = true;
-            $this->assertInstanceOf(FieldDefinition::class, $field);
-            $this->assertSame('test-value', $value);
-            return 'ok';
-        });
+        $transformer = new CallbackTransformer(
+            function ($value, FieldDefinition $field, FormContext $context) use (&$called) {
+                $called = true;
+                $this->assertInstanceOf(FieldDefinition::class, $field);
+                $this->assertInstanceOf(FormContext::class, $context);
+                $this->assertSame('test-value', $value);
+                return 'ok';
+            }
+        );
         
-        $result = $transformer->apply('test-value', $this->field);
+        $result = $transformer->apply('test-value', $this->field, $this->context);
         
         $this->assertTrue($called, 'Callback should be executed');
         $this->assertSame('ok', $result);
@@ -95,8 +101,8 @@ final class CallbackTransformerTest extends TestCase
     public function testIdempotency(callable $callback, mixed $input): void
     {
         $transformer = new CallbackTransformer($callback);
-        $once = $transformer->apply($input, $this->field);
-        $twice = $transformer->apply($once, $this->field);
+        $once = $transformer->apply($input, $this->field, $this->context);
+        $twice = $transformer->apply($once, $this->field, $this->context);
         
         $this->assertSame($once, $twice, 'Transformer should be idempotent');
     }
@@ -104,8 +110,8 @@ final class CallbackTransformerTest extends TestCase
     public static function provideIdempotentCases(): array
     {
         return [
-            'trim' => [fn ($v) => trim((string)$v), '  abc  '],
-            'normalize-dash' => [fn ($v) => str_replace('--', '-', (string)$v), 'a--b'],
+            'trim' => [fn($v) => trim((string)$v), '  abc  '],
+            'normalize-dash' => [fn($v) => str_replace('--', '-', (string)$v), 'a--b'],
         ];
     }
     
@@ -117,34 +123,34 @@ final class CallbackTransformerTest extends TestCase
     public function testEdgeCases(callable $callback, mixed $input, mixed $expected): void
     {
         $transformer = new CallbackTransformer($callback);
-        $this->assertSame($expected, $transformer->apply($input, $this->field));
+        $this->assertSame($expected, $transformer->apply($input, $this->field, $this->context));
     }
     
     public static function provideEdgeCases(): array
     {
         return [
-            'null value handled' => [fn ($v) => $v ?? 'empty', null, 'empty'],
-            'numeric value passthrough' => [fn ($v) => $v, 123, 123],
-            'array passthrough' => [fn ($v) => $v, ['x'], ['x']],
+            'null value handled' => [fn($v) => $v ?? 'empty', null, 'empty'],
+            'numeric value passthrough' => [fn($v) => $v, 123, 123],
+            'array passthrough' => [fn($v) => $v, ['x'], ['x']],
         ];
     }
     
     // -------------------------------------------------
-    // Not supported (would rely on Reflection methods)
+    // Invalid callable
     // -------------------------------------------------
     
-    public static function provideInvalidCallableCases(): array
+    public static function provideValidCallableCases(): array
     {
         return [
-            'one-arg callable not allowed' => ['strtoupper'(...), 'abc'],
+            'single-arg callable works' => ['strtoupper'(...), 'abc', 'ABC'],
         ];
     }
     
-    #[DataProvider('provideInvalidCallableCases')]
-    public function testInvalidCallableThrowsError(callable $callback, string $input): void
+    #[DataProvider('provideValidCallableCases')]
+    public function testSingleArgCallableWorks(callable $callback, string $input, string $expected): void
     {
         $transformer = new CallbackTransformer($callback);
-        $this->expectException(\ArgumentCountError::class);
-        $transformer->apply($input, $this->field);
+        $result = $transformer->apply($input, $this->field, $this->context);
+        $this->assertSame($expected, $result);
     }
 }

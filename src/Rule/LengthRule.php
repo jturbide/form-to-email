@@ -5,67 +5,56 @@ declare(strict_types=1);
 namespace FormToEmail\Rule;
 
 use FormToEmail\Core\FieldDefinition;
+use FormToEmail\Core\ErrorDefinition;
 
 /**
  * Rule: LengthRule
  *
- * Ensures that the given string value respects a minimum and/or
- * maximum character length.
+ * Ensures a string’s length is between a given minimum and/or maximum.
  *
- * It uses `mb_strlen()` for multibyte (UTF-8) safety.
- * Empty strings are considered valid — combine this with
- * `RequiredRule` for mandatory fields.
+ * Empty strings are considered valid. Combine with {@see RequiredRule}
+ * for mandatory fields.
  *
- * Example:
- * ```php
- * $rule = new LengthRule(min: 5, max: 100);
- * $rule->validate('abc');  // ['too_short']
- * $rule->validate(str_repeat('a', 120)); // ['too_long']
- * $rule->validate('hello'); // []
- * ```
+ * Supports both ASCII and multibyte measurement via `mb_strlen()`.
  */
-final class LengthRule extends AbstractRule
+final readonly class LengthRule extends AbstractLengthRule
 {
     public function __construct(
-        /**
-         * Minimum allowed length (null = no minimum).
-         */
-        private readonly ?int $min = null,
-        /**
-         * Maximum allowed length (null = no maximum).
-         */
-        private readonly ?int $max = null,
-        /**
-         * Error code when value is shorter than $min.
-         */
-        private readonly string $tooShort = 'too_short',
-        /**
-         * Error code when value is longer than $max.
-         */
-        private readonly string $tooLong = 'too_long',
+        private ?int $min = null,
+        private ?int $max = null,
+        private string $tooShortCode = 'too_short',
+        private string $tooLongCode = 'too_long',
+        private string $tooShortMessage = 'The field "{field}" must be at least {min} characters long.',
+        private string $tooLongMessage = 'The field "{field}" must not exceed {max} characters.',
+        bool $multibyte = true,
+        string $encoding = 'UTF-8',
     ) {
+        parent::__construct($multibyte, $encoding);
     }
     
-    /**
-     * @inheritDoc
-     */
     #[\Override]
-    public function validate(mixed $value, FieldDefinition $field): array
+    protected function validate(mixed $value, FieldDefinition $field): array
     {
-        // Allow empty strings (handled by RequiredRule if needed)
-        if ($value === '') {
+        // Non-string values are ignored (other rules handle type enforcement)
+        if (!is_string($value) || $value === '') {
             return [];
         }
         
-        $length = mb_strlen($value);
+        $len = $this->getLength($value);
         $errors = [];
         
-        if ($this->min !== null && $length < $this->min) {
-            $errors[] = $this->tooShort;
+        if ($this->min !== null && $len < $this->min) {
+            $errors[] = $this->makeError($field, $this->tooShortCode, $this->tooShortMessage, [
+                'min' => $this->min,
+                'length' => $len,
+            ]);
         }
         
-        if ($this->max !== null && $length > $this->max) {
-            $errors[] = $this->tooLong;
+        if ($this->max !== null && $len > $this->max) {
+            $errors[] = $this->makeError($field, $this->tooLongCode, $this->tooLongMessage, [
+                'max' => $this->max,
+                'length' => $len,
+            ]);
         }
         
         return $errors;

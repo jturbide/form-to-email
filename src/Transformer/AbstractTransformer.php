@@ -5,66 +5,94 @@ declare(strict_types=1);
 namespace FormToEmail\Transformer;
 
 use FormToEmail\Core\FieldDefinition;
+use FormToEmail\Core\FieldProcessor;
+use FormToEmail\Core\FormContext;
 
 /**
- * Class AbstractTransform
+ * Base class for all data transformers.
  *
- * Provides a base implementation for transforms.
- * Useful for creating lightweight transforms without
- * re-implementing boilerplate every time.
+ * Transformers modify or enrich field values — possibly
+ * using data from other fields. They run *after* filters
+ * and *before* validation rules in most pipelines.
  *
- * Transforms extending this class should implement
- * the {@see AbstractTransformer::apply()} method.
+ * Unlike rules, transformers never add validation errors;
+ * their purpose is deterministic mutation or aggregation.
+ *
+ * # Example
+ *
+ * ```php
+ * final class FullNameTransformer extends AbstractTransformer
+ * {
+ *     #[\Override]
+ *     protected function apply(mixed $value, FieldDefinition $field, FormContext $ctx): mixed
+ *     {
+ *         // Example: combine "first_name" + "last_name" into "full_name"
+ *         $first = (string) $ctx->getValue('first_name');
+ *         $last  = (string) $ctx->getValue('last_name');
+ *         return trim("$first $last");
+ *     }
+ * }
+ * ```
  */
-abstract class AbstractTransformer implements Transformer
+abstract class AbstractTransformer implements FieldProcessor
 {
+    // ---------------------------------------------------------------------
+    // Targeting
+    // ---------------------------------------------------------------------
+    
     /**
-     * Whether this transform supports the given field.
+     * Whether this transformer should be applied to a specific field.
      *
-     * By default, all fields are supported. Override this
-     * in child classes to target specific FieldRoles
-     * or field types.
-     *
-     * @param FieldDefinition $field
-     * @return bool
+     * Override to restrict usage based on name or role.
      */
     public function supports(FieldDefinition $field): bool
     {
         return true;
     }
     
-    /**
-     * Apply the transform to the given value.
-     *
-     * Must be implemented by subclasses.
-     *
-     * @param mixed $value The raw or intermediate field value.
-     * @param FieldDefinition $field The field definition being transformed.
-     *
-     * @return mixed The sanitized or transformed value.
-     */
-    #[\Override]
-    abstract public function apply(mixed $value, FieldDefinition $field): mixed;
+    // ---------------------------------------------------------------------
+    // Core transformation
+    // ---------------------------------------------------------------------
     
     /**
-     * Convenience method to apply transform conditionally
-     * only if {@see supports()} returns true.
+     * Apply the transformation logic.
      *
-     * @param mixed $value
-     * @param FieldDefinition $field
+     * Implement this in subclasses to perform any deterministic
+     * change of value (e.g., merging, normalization, formatting).
      *
-     * @return mixed
+     * @param mixed           $value Current field value.
+     * @param FieldDefinition $field Associated field definition.
+     * @param FormContext     $context Shared context for cross-field access.
+     *
+     * @return mixed The transformed or enriched value.
      */
-    public function transform(mixed $value, FieldDefinition $field): mixed
-    {
-        return $this->supports($field)
-            ? $this->apply($value, $field)
-            : $value;
-    }
+    abstract protected function apply(mixed $value, FieldDefinition $field, FormContext $context): mixed;
     
+    // ---------------------------------------------------------------------
+    // Unified processing
+    // ---------------------------------------------------------------------
+    
+    /**
+     * Executes this transformer inside the unified pipeline.
+     *
+     * If {@see supports()} returns true, applies the transformation
+     * and updates the context’s normalized data immediately.
+     *
+     * Transformers never add validation errors, but they *can*
+     * depend on other context values (cross-field logic).
+     */
     #[\Override]
-    public function process(mixed $value, FieldDefinition $field, array &$errors): mixed
+    public function process(mixed $value, FieldDefinition $field, FormContext $context): mixed
     {
-        return $this->transform($value, $field);
+        if (!$this->supports($field)) {
+            return $value;
+        }
+        
+        $newValue = $this->apply($value, $field, $context);
+        
+        // Update the context for downstream processors
+        $context->setValue($field->getName(), $newValue);
+        
+        return $newValue;
     }
 }

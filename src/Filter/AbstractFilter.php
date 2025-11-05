@@ -5,66 +5,99 @@ declare(strict_types=1);
 namespace FormToEmail\Filter;
 
 use FormToEmail\Core\FieldDefinition;
+use FormToEmail\Core\FieldProcessor;
+use FormToEmail\Core\FormContext;
 
 /**
- * Class AbstractFilter
+ * Base class for all filters (sanitizers / transformers).
  *
- * Provides a base implementation for filters.
- * Useful for creating lightweight filters without
- * re-implementing boilerplate every time.
+ * Filters are processors that *always* return a value
+ * (never add errors). They can modify or normalize the
+ * input value for their associated field.
  *
- * Filters extending this class should implement
- * the {@see AbstractTransformer::apply()} method.
+ * Subclasses typically implement {@see AbstractFilter::apply()}.
+ *
+ * # Example
+ *
+ * ```php
+ * final class TrimFilter extends AbstractFilter
+ * {
+ *     protected function apply(mixed $value, FieldDefinition $field): mixed
+ *     {
+ *         return is_string($value) ? trim($value) : $value;
+ *     }
+ * }
+ * ```
+ *
+ * They can also override {@see supports()} to selectively
+ * target specific field types or roles.
  */
-abstract class AbstractFilter implements Filter
+abstract class AbstractFilter implements FieldProcessor
 {
+    // ---------------------------------------------------------------------
+    // Field targeting
+    // ---------------------------------------------------------------------
+    
     /**
-     * Whether this filter supports the given field.
+     * Whether this filter should be applied to a given field.
      *
-     * By default, all fields are supported. Override this
-     * in child classes to target specific FieldRoles
-     * or field types.
+     * Override in subclasses to limit scope by role or name.
      *
-     * @param FieldDefinition $field
-     * @return bool
+     * @return bool True if this filter applies to the field.
      */
     public function supports(FieldDefinition $field): bool
     {
         return true;
     }
     
+    // ---------------------------------------------------------------------
+    // Core behavior
+    // ---------------------------------------------------------------------
+    
     /**
-     * Apply the filter to the given value.
+     * Apply the transformation logic.
      *
      * Must be implemented by subclasses.
      *
-     * @param mixed $value The raw or intermediate field value.
-     * @param FieldDefinition $field The field definition being filtered.
+     * @param mixed $value Current field value.
+     * @param FieldDefinition $field Associated field definition.
      *
-     * @return mixed The sanitized or transformed value.
+     * @return mixed The transformed / normalized value.
      */
-    #[\Override]
-    abstract public function apply(mixed $value, FieldDefinition $field): mixed;
+    abstract protected function apply(mixed $value, FieldDefinition $field): mixed;
     
     /**
-     * Convenience method to apply filter conditionally
-     * only if {@see supports()} returns true.
+     * Apply the filter if supported, otherwise return the value unchanged.
      *
-     * @param mixed $value
-     * @param FieldDefinition $field
-     *
-     * @return mixed
+     * This method is used internally by {@see process()} but can also be
+     * called directly for ad-hoc usage in tests or utility scripts.
      */
-    public function filter(mixed $value, FieldDefinition $field): mixed
+    protected function filter(mixed $value, FieldDefinition $field): mixed
     {
         return $this->supports($field)
             ? $this->apply($value, $field)
             : $value;
     }
     
+    // ---------------------------------------------------------------------
+    // Unified processing pipeline
+    // ---------------------------------------------------------------------
+    
+    /**
+     * Execute the filter within the unified processor interface.
+     *
+     * Filters are pure transformations — they do not add validation errors.
+     * However, they can still use {@see FormContext} to read or modify
+     * other fields if necessary (e.g. normalization dependencies).
+     */
     #[\Override]
-    public function process(mixed $value, FieldDefinition $field, array &$errors): mixed
+    public function process(mixed $value, FieldDefinition $field, FormContext $context): mixed
     {
-        return $this->filter($value, $field);
+        $newValue = $this->filter($value, $field);
+        
+        // Persist the transformed value immediately into context
+        $context->setValue($field->getName(), $newValue);
+        
+        return $newValue;
     }
 }
