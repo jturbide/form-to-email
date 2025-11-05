@@ -19,12 +19,12 @@ use FormToEmail\Core\FieldDefinition;
  * - Normalizes IDN → punycode
  * - Preserves valid symbols (+, _, -, ., ')
  */
-class SanitizeEmailFilter extends AbstractFilter
+final class SanitizeEmailFilter extends AbstractFilter
 {
     public function __construct(
         private readonly bool $strict = true,
         private readonly bool $normalizeIdn = true,
-        private readonly bool $normalizeCase = true
+        private readonly bool $normalizeCase = true,
     ) {
     }
     
@@ -41,19 +41,19 @@ class SanitizeEmailFilter extends AbstractFilter
         }
         
         // 1. Decode encoded CRLF (e.g. %0A)
-        $email = str_ireplace(["%0a", "%0d"], "\n", $email);
+        $email = str_ireplace(['%0a', '%0d'], "\n", $email);
         
         // 2. Remove invisible control characters
-        $email = preg_replace('/[^\P{C}\t\n\r]/u', '', $email ?? '') ?? '';
+        $email = preg_replace('/[^\P{C}\t\n\r]/u', '', $email) ?? '';
         
         // 3. Remove actual CR/LF
-        $email = str_replace(["\r", "\n"], '', $email ?? '');
+        $email = str_replace(["\r", "\n"], '', $email);
         
-        // 4. Strip dangerous header keywords after newline decode
-        $email = preg_replace('/\b(?:cc|bcc|to|from|subject)\s*:\s*/iu', '', $email ?? '') ?? '';
+        // 4. Strip dangerous header keywords
+        $email = preg_replace('/\b(?:cc|bcc|to|from|subject)\s*:\s*/iu', '', $email) ?? '';
         
         // 5. Strip angle brackets
-        $email = str_replace(['<', '>'], '', $email ?? '');
+        $email = str_replace(['<', '>'], '', $email);
         
         // 6. Collapse multiple @ → keep first
         if (substr_count($email, '@') > 1) {
@@ -68,7 +68,7 @@ class SanitizeEmailFilter extends AbstractFilter
             return $this->sanitizeLocal($email);
         }
         
-        [$local, $domain] = explode('@', $email, 2);
+        [$local, $domain] = explode('@', $email, 2) + ['', ''];
         
         // 8. Normalize domain case
         if ($this->normalizeCase) {
@@ -93,7 +93,7 @@ class SanitizeEmailFilter extends AbstractFilter
             : $this->sanitizeUnicodeLocal($local);
         
         // 11. Collapse double dots and trim
-        $local = preg_replace('/\.{2,}/', '.', $local ?? '') ?? '';
+        $local = preg_replace('/\.{2,}/', '.', $local) ?? '';
         $local = trim($local, '. ');
         
         // 12. Recombine sanitized parts
@@ -102,27 +102,21 @@ class SanitizeEmailFilter extends AbstractFilter
     
     private function stripInvalidAscii(string $input): string
     {
-        return preg_replace('/[^A-Za-z0-9!#$%&\'*+\/=?^_`{|}~.\-]/u', '', $input ?? '') ?? '';
+        return preg_replace('/[^A-Za-z0-9!#$%&\'*+\/=?^_`{|}~.\-]/u', '', $input) ?? '';
     }
     
     private function sanitizeUnicodeLocal(string $input): string
     {
-        // Preserve Unicode letters, digits, and RFC-valid symbols (+ _ . ' -)
-        // ✅ FINAL FIX: Escapes BOTH '\+' (as a literal, not \p{N} quantifier)
-        // AND '\-' (as a literal, not a range).
-        $input = preg_replace('/[^\p{L}\p{N}+_.\'\-]/u', '', $input ?? '') ?? '';
-        
-        // Remove emojis explicitly
-        $input = preg_replace('/[\x{1F300}-\x{1FAFF}\x{1F1E6}-\x{1F64F}\x{2600}-\x{27BF}]/u', '', $input ?? '') ?? '';
-        
-        // Collapse multiple dots
-        $input = preg_replace('/\.{2,}/', '.', $input ?? '') ?? '';
-        
+        $input = preg_replace('/[^\p{L}\p{N}+_.\'\-]/u', '', $input) ?? '';
+        $input = preg_replace('/[\x{1F300}-\x{1FAFF}\x{1F1E6}-\x{1F64F}\x{2600}-\x{27BF}]/u', '', $input) ?? '';
+        $input = preg_replace('/\.{2,}/', '.', $input) ?? '';
         return trim($input, '. ');
     }
     
     private function sanitizeLocal(string $input): string
     {
-        return $this->strict ? $this->stripInvalidAscii($input) : $this->sanitizeUnicodeLocal($input);
+        return $this->strict
+            ? $this->stripInvalidAscii($input)
+            : $this->sanitizeUnicodeLocal($input);
     }
 }
