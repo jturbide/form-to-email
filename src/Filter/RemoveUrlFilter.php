@@ -42,6 +42,10 @@ final class RemoveUrlFilter extends AbstractFilter
             $value = Normalizer::normalize($value, Normalizer::FORM_KC);
         }
         
+        if (!is_string($value)) {
+            return $value;
+        }
+        
         // In aggressive mode, replace common Unicode "dot" characters too
         if ($this->aggressive) {
             $value = str_replace(["․", "。", "．"], ".", $value);

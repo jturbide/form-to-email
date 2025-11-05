@@ -76,6 +76,8 @@ final class FormDefinition
         foreach ($this->fields as $field) {
             $name = $field->getName();
             $value = $input[$name] ?? null;
+            
+            /** @var list<string> $fieldErrors */
             $fieldErrors = [];
             
             foreach ($field->getProcessors() as $processor) {

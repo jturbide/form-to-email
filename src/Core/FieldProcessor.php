@@ -18,7 +18,7 @@ interface FieldProcessor
      *
      * @param mixed $value The current field value.
      * @param FieldDefinition $field The field definition.
-     * @param array<string, string[]> $errors Reference array to append validation errors.
+     * @param list<string> $errors Reference array to append validation errors.
      *
      * @return mixed The (potentially transformed) value.
      */

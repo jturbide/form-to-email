@@ -7,7 +7,7 @@ env:
   EXTENSIONS_CACHE_KEY: php-ext-v1
 
 jobs:
-  qa:
+  main:
     runs-on: ubuntu-latest
 
     strategy:

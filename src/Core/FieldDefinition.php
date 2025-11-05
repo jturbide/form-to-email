@@ -56,6 +56,9 @@ final class FieldDefinition
         return $this->name;
     }
     
+    /**
+     * @return FieldRole[]
+     */
     public function getRoles(): array
     {
         return $this->roles;
