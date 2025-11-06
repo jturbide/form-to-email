@@ -4,62 +4,73 @@ declare(strict_types=1);
 
 namespace FormToEmail\Http;
 
-use FormToEmail\Core\ErrorDefinition;
-use FormToEmail\Core\ErrorFactory;
-use FormToEmail\Core\FormDefinition;
-use FormToEmail\Core\ValidationError;
-use FormToEmail\Core\ValidationResult;
-use FormToEmail\Enum\FieldRole;
-use FormToEmail\Enum\ResponseCode;
-use FormToEmail\Mail\MailerAdapter;
-use FormToEmail\Mail\MailPayload;
+use FormToEmail\Core\{
+    FormDefinition,
+    ValidationResult,
+    ValidationError,
+    Logger
+};
+use FormToEmail\Enum\{
+    FieldRole,
+    ResponseCode
+};
+use FormToEmail\Mail\{
+    MailerAdapter,
+    MailPayload
+};
 use FormToEmail\Template\TemplateRenderer;
+use Throwable;
 
 /**
  * Class: FormToEmailController
  *
- * Central coordinator that:
- *  - Parses incoming form data (JSON or POST),
- *  - Runs validation using {@see FormDefinition},
- *  - Renders email templates (HTML + text),
- *  - Sends the email via a {@see MailerAdapter},
- *  - Returns a structured JSON response with a stable {@see ResponseCode}.
+ * Central coordinator for processing and delivering form submissions.
  *
- * Designed for both:
- *  - Production HTTP entrypoints (via {@see handle()})
- *  - Unit tests or internal calls (via {@see handleRequest()})
+ * Responsibilities:
+ *  - Parse incoming POST/JSON payloads.
+ *  - Validate fields via {@see FormDefinition}.
+ *  - Build templated {@see MailPayload}.
+ *  - Send mail using {@see MailerAdapter}.
+ *  - Return structured response codes.
+ *  - Optionally log lifecycle events via {@see Logger}.
+ *
+ * This controller is self-contained and suitable for:
+ *  - Direct HTTP endpoints (see {@see handle()}).
+ *  - CLI testing or internal calls (see {@see handleRequest()}).
  */
-final class FormToEmailController
+final readonly class FormToEmailController
 {
+    /**
+     * @param FormDefinition $form Form definition object.
+     * @param MailerAdapter $mailer Mail delivery adapter.
+     * @param list<string> $recipients Destination addresses.
+     * @param string $defaultSubject Fallback subject line.
+     * @param Logger|null $logger Optional submission logger.
+     * @param string|null $customHtmlTemplate Optional HTML template.
+     * @param string|null $customTextTemplate Optional text template.
+     */
     public function __construct(
-        private readonly FormDefinition $form,
-        private readonly MailerAdapter $mailer,
-        /**
-         * Destination email addresses (can include multiple).
-         *
-         * @var list<string>
-         */
-        private readonly array $recipients,
-        /**
-         * Default subject line if none is provided via field roles.
-         */
-        private readonly string $defaultSubject = 'New Form Submission',
-        /**
-         * Optional custom HTML template (with {{placeholders}}).
-         */
-        private readonly ?string $customHtmlTemplate = null,
-        /**
-         * Optional custom plain text template (with {{placeholders}}).
-         */
-        private readonly ?string $customTextTemplate = null,
+        private FormDefinition $form,
+        private MailerAdapter $mailer,
+        private array $recipients,
+        private string $defaultSubject = 'New Form Submission',
+        private ?Logger $logger = null,
+        private ?string $customHtmlTemplate = null,
+        private ?string $customTextTemplate = null,
     ) {
     }
     
+    // ---------------------------------------------------------------------
+    // Public API
+    // ---------------------------------------------------------------------
+    
     /**
-     * Handles a request in a test- or CLI-safe way.
+     * Safely handles a submission in CLI/test contexts.
      *
-     * @param array<string, string>|null $server   Optional server globals override
-     * @param string|null                $rawBody  Optional JSON body override
+     * Parses, validates, sends, and logs the lifecycle.
+     *
+     * @param array<string,string>|null $server Optional $_SERVER override.
+     * @param string|null $rawBody Optional raw JSON override.
      *
      * @return array{
      *     code: string,
@@ -71,45 +82,69 @@ final class FormToEmailController
         $server ??= $_SERVER;
         $method = $server['REQUEST_METHOD'] ?? 'GET';
         
+        // Allow CORS preflights.
         if ($method === 'OPTIONS') {
             return ['code' => ResponseCode::OK->value];
         }
         
+        // Reject non-POST requests early.
         if ($method !== 'POST') {
             return ['code' => ResponseCode::INVALID_METHOD->value];
         }
         
+        // Parse JSON body.
         $body = $rawBody ?? file_get_contents('php://input');
         $input = json_decode($body === false ? '' : $body, true);
+        
         if (!is_array($input)) {
             return ['code' => ResponseCode::INVALID_JSON->value];
         }
         
-        $result = $this->form->validate($input);
+        // Log the incoming submission (fields or full raw input)
+        $this->logger?->recordSubmissionStart($input);
+        
+        // Validate the payload.
+        $result = $this->form->process($input);
+        
         if ($result->failed()) {
+            // Log validation errors with structured field data.
+            $this->logger?->recordValidationErrors($result->allErrors());
+            
             return [
                 'code' => ResponseCode::VALIDATION_ERROR->value,
                 'errors' => $result->allErrors(),
             ];
         }
         
+        // Try to send the email.
         try {
             $payload = $this->buildMail($result);
             $this->mailer->send($payload);
             
+            // Log successful submission including recipients and subject.
+            $this->logger?->recordSuccess($result->data, [
+                'to' => $this->recipients,
+                'subject' => $payload->subject,
+            ]);
+            
             return ['code' => ResponseCode::OK->value];
-        } catch (\Throwable $e) {
-            error_log('form-to-email mail failure: ' . $e->getMessage());
+        } catch (Throwable $e) {
+            // Log mail or template failure with exception context.
+            $this->logger?->recordException($e);
+            
             return ['code' => ResponseCode::MAIL_FAILURE->value];
         }
     }
     
     /**
-     * Production entrypoint — emits JSON and terminates.
+     * Production HTTP entrypoint — emits JSON directly.
+     *
+     * Never returns (terminates via `exit()`).
      */
     public function handle(): never
     {
         header('Content-Type: application/json; charset=UTF-8');
+        
         $response = $this->handleRequest();
         
         http_response_code(match ($response['code']) {
@@ -121,12 +156,18 @@ final class FormToEmailController
             default => 500,
         });
         
-        echo json_encode($response, JSON_UNESCAPED_SLASHES);
+        echo json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         exit();
     }
     
+    // ---------------------------------------------------------------------
+    // Internal Helpers
+    // ---------------------------------------------------------------------
+    
     /**
-     * Internal helper: builds an immutable MailPayload object.
+     * Builds a {@see MailPayload} from the validated data.
+     *
+     * @param ValidationResult $result Validated form data container.
      */
     private function buildMail(ValidationResult $result): MailPayload
     {
@@ -136,6 +177,7 @@ final class FormToEmailController
         $replyToName = null;
         $subjectParts = [];
         
+        // Extract sender/subject info from field roles.
         foreach ($this->form->fields() as $field) {
             $value = $data[$field->name] ?? null;
             if ($value === null || $value === '') {
@@ -152,10 +194,12 @@ final class FormToEmailController
             }
         }
         
+        // Fallback subject.
         $subject = $subjectParts
             ? implode(' - ', $subjectParts)
             : $this->defaultSubject;
         
+        // Render templates.
         $htmlBody = $this->customHtmlTemplate !== null
             ? TemplateRenderer::render($this->customHtmlTemplate, $data)
             : TemplateRenderer::defaultHtml($data, $subject);

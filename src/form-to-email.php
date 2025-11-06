@@ -16,7 +16,13 @@ declare(strict_types=1);
 
 use FormToEmail\Core\FieldDefinition;
 use FormToEmail\Core\FormDefinition;
+use FormToEmail\Core\Logger;
 use FormToEmail\Enum\FieldRole;
+use FormToEmail\Enum\LogFormat;
+use FormToEmail\Filter\HtmlEscapeFilter;
+use FormToEmail\Filter\SanitizeEmailFilter;
+use FormToEmail\Filter\SanitizePhoneFilter;
+use FormToEmail\Filter\StripTagsFilter;
 use FormToEmail\Http\FormToEmailController;
 use FormToEmail\Mail\PHPMailerAdapter;
 use FormToEmail\Rule\CallbackRule;
@@ -24,10 +30,7 @@ use FormToEmail\Rule\EmailRule;
 use FormToEmail\Rule\LengthRule;
 use FormToEmail\Rule\RegexRule;
 use FormToEmail\Rule\RequiredRule;
-use FormToEmail\Filter\StripTagsFilter;
-use FormToEmail\Filter\HtmlEscapeFilter;
-use FormToEmail\Filter\SanitizeEmailFilter;
-use FormToEmail\Filter\SanitizePhoneFilter;
+
 
 // --- Autoload dependencies ---
 require __DIR__ . '/../vendor/autoload.php';
@@ -91,7 +94,7 @@ $form = new FormDefinition()
 // --- Configure mail transport ---
 $mailer = new PHPMailerAdapter(
     useSmtp: true,
-    host: $_ENV['SMTP_HOST']     ?? 'mail.example.com',
+    host: $_ENV['SMTP_HOST'] ?? 'mail.example.com',
     port: (int)($_ENV['SMTP_PORT'] ?? 465),
     username: $_ENV['SMTP_USER'] ?? 'no-reply@example.com',
     password: $_ENV['SMTP_PASS'] ?? '',
@@ -102,12 +105,20 @@ $mailer = new PHPMailerAdapter(
     fromName: $_ENV['FROM_NAME'] ?? 'Website Contact Form'
 );
 
+// --- Configure logger ---
+$logger = new Logger(
+    enabled: (bool)($_ENV['LOGGER_ENABLED'] ?? false),
+    format: LogFormat::Text,
+    file: $_ENV['LOGGER_FILE'] ?? __DIR__ . '/../logs/form.log',
+);
+
 // --- Initialize and run controller ---
 $controller = new FormToEmailController(
     form: $form,
     mailer: $mailer,
     recipients: explode(',', $_ENV['CONTACT_RECIPIENTS'] ?? 'contact@example.com'),
-    defaultSubject: $_ENV['DEFAULT_SUBJECT'] ?? 'New Form Submission'
+    defaultSubject: $_ENV['DEFAULT_SUBJECT'] ?? 'New Form Submission',
+    logger: $logger,
 );
 
 // Handle request and output structured JSON

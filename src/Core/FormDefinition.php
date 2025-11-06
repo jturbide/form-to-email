@@ -43,11 +43,16 @@ final class FormDefinition
     }
     
     /**
-     * Validates an input payload against all field definitions.
+     * Process an input payload against all field definitions.
+     *
+     * Processors:
+     * - Sanitize: Filters
+     * - Validate: Rules
+     * - Format: Transformers
      *
      * @param array<string, mixed> $input Raw user input (e.g. $_POST / JSON)
      */
-    public function validate(array $input): ValidationResult
+    public function process(array $input): ValidationResult
     {
         // Shared state for the entire validation run
         $context = new FormContext($input);

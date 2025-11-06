@@ -49,6 +49,12 @@ final readonly class ValidationResult implements JsonSerializable
     // Predicates
     // ---------------------------------------------------------------------
     
+    /** True when validation succeeded. */
+    public function isValid(): bool
+    {
+        return $this->valid;
+    }
+    
     /** True when validation failed. */
     public function failed(): bool
     {
