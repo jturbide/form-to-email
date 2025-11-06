@@ -7,10 +7,12 @@
     "form",
     "email",
     "contact-form",
+    "mail",
     "phpmailer",
     "validation",
-    "php84",
-    "microservice"
+    "microservice",
+    "form-to-email",
+    "email-a-form"
   ],
   "authors": [
     {

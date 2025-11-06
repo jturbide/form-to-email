@@ -1,7 +1,98 @@
-# form-to-email
+# Form to Email
+
+[![Build Status](https://github.com/jturbide/form-to-email/actions/workflows/main.yml/badge.svg)](https://github.com/jturbide/form-to-email/actions)
+[![Docs](https://img.shields.io/badge/docs-online-success.svg)](https://jturbide.github.io/form-to-email/)
+[![Downloads](https://img.shields.io/packagist/dt/jturbide/form-to-email?color=blue&label=downloads)](https://packagist.org/packages/jturbide/form-to-email)
+
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/jturbide/form-to-email)
+[![Psalm Level](https://img.shields.io/badge/psalm-level%201-brightgreen.svg)](https://psalm.dev/)
+[![PHPStan](https://img.shields.io/badge/PHPStan-Level%209-brightgreen)](https://phpstan.org/)
+[![Code Style](https://img.shields.io/badge/code%20style-PSR--12-blue)](https://www.php-fig.org/psr/psr-12/)
+
+[![Packagist Version](https://img.shields.io/packagist/v/jturbide/form-to-email?color=4c1&label=stable)](https://packagist.org/packages/jturbide/form-to-email)
+[![PHP Version](https://img.shields.io/packagist/php-v/jturbide/form-to-email?logo=php&color=777bb3)](https://packagist.org/packages/jturbide/form-to-email)
 
 **A lightweight, extensible PHP 8.4+ library for secure form processing, validation, sanitization, transformation, and structured email delivery.**
 Built for modern PHP projects with strict typing, predictable pipelines, and framework-agnostic design.
+
+---
+
+## TL;DR
+
+Install the package:
+```bash
+composer require jturbide/form-to-email
+```
+
+Create a form definition, create a mailer, and handle a request:
+```php
+<?php
+
+use FormToEmail\Core\FieldDefinition;
+use FormToEmail\Core\FormDefinition;
+use FormToEmail\Enum\FieldRole;
+use FormToEmail\Filter\HtmlEscapeFilter;
+use FormToEmail\Filter\RemoveEmojiFilter;
+use FormToEmail\Filter\RemoveUrlFilter;
+use FormToEmail\Filter\SanitizeEmailFilter;
+use FormToEmail\Filter\StripTagsFilter;
+use FormToEmail\Filter\TrimFilter;
+use FormToEmail\Http\FormToEmailController;
+use FormToEmail\Mail\PHPMailerAdapter;
+use FormToEmail\Rule\EmailRule;
+use FormToEmail\Rule\RequiredRule;
+use FormToEmail\Transformer\LowercaseTransformer;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+$form = new FormDefinition()
+    ->add(new FieldDefinition('name', roles: [FieldRole::SenderName], processors: [
+        new TrimFilter(),
+        new RequiredRule(),
+    ]))
+    ->add(new FieldDefinition('email', roles: [FieldRole::SenderEmail], processors: [
+        new SanitizeEmailFilter(),
+        new EmailRule(),
+        new LowercaseTransformer(),
+    ]))
+    ->add(new FieldDefinition('message', roles: [FieldRole::Body], processors: [
+        new RemoveUrlFilter(),
+        new RemoveEmojiFilter(),
+        new StripTagsFilter(),
+        new RequiredRule(),
+        new HtmlEscapeFilter(),
+    ]));
+
+$mailer = new PHPMailerAdapter(
+    useSmtp: true,
+    host: 'mail.example.com',
+    username: 'no-reply@example.com',
+    password: 'secret',
+    fromEmail: 'no-reply@example.com',
+    fromName: 'Website Contact Form'
+);
+
+new FormToEmailController($form, $mailer, ['contact@example.com'])->handle();
+```
+
+Serve the file
+```bash
+php -s localhost:8000 ./
+```
+
+Send a XHR request
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{
+  "name": "Julien",
+  "email": "",
+  "message": "Hello world!"
+}' http://localhost:8000/contact.php
+```
+
+See the result
+```json
+
+```
 
 ---
 
