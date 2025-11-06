@@ -1,23 +1,20 @@
 # Form to Email
 
 [![Build Status](https://github.com/jturbide/form-to-email/actions/workflows/main.yml/badge.svg)](https://github.com/jturbide/form-to-email/actions)
-[![Docs](https://img.shields.io/badge/docs-online-success.svg)](https://jturbide.github.io/form-to-email/)
+[![Docs](https://img.shields.io/badge/docs-online-success.svg)](https://github.com/jturbide/form-to-email)
 [![Downloads](https://img.shields.io/packagist/dt/jturbide/form-to-email?color=blue&label=downloads)](https://packagist.org/packages/jturbide/form-to-email)
 
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/jturbide/form-to-email)
-[![Psalm Level](https://img.shields.io/badge/psalm-level%201-brightgreen.svg)](https://psalm.dev/)
-[![PHPStan](https://img.shields.io/badge/PHPStan-Level%209-brightgreen)](https://phpstan.org/)
+[![Psalm Level](https://img.shields.io/badge/psalm-level%202-brightgreen.svg)](https://psalm.dev/)
+[![PHPStan](https://img.shields.io/badge/PHPStan-Level%208-brightgreen)](https://phpstan.org/)
 [![Code Style](https://img.shields.io/badge/code%20style-PSR--12-blue)](https://www.php-fig.org/psr/psr-12/)
-
-[![Packagist Version](https://img.shields.io/packagist/v/jturbide/form-to-email?color=4c1&label=stable)](https://packagist.org/packages/jturbide/form-to-email)
-[![PHP Version](https://img.shields.io/packagist/php-v/jturbide/form-to-email?logo=php&color=777bb3)](https://packagist.org/packages/jturbide/form-to-email)
 
 **A lightweight, extensible PHP 8.4+ library for secure form processing, validation, sanitization, transformation, and structured email delivery.**
 Built for modern PHP projects with strict typing, predictable pipelines, and framework-agnostic design.
 
 ---
 
-## TL;DR
+## 🚀 Quick start (tl;dr)
 
 Install the package:
 ```bash
@@ -138,83 +135,15 @@ See the result
 
 ---
 
-## 🚀 Quick start
-
-```bash
-composer require jturbide/form-to-email
-```
-
-Example usage:
-
-```php
-use FormToEmail\Core\FieldDefinition;
-use FormToEmail\Core\FormDefinition;
-use FormToEmail\Enum\FieldRole;
-use FormToEmail\Http\FormToEmailController;
-use FormToEmail\Mail\PHPMailerAdapter;
-use FormToEmail\Rule\RequiredRule;
-use FormToEmail\Rule\EmailRule;
-use FormToEmail\Filter\SanitizeEmailFilter;
-use FormToEmail\Transformer\TrimTransformer;
-
-$form = new FormDefinition()
-  ->add((new FieldDefinition('name', [FieldRole::SenderName]))
-    ->addFilter(new TrimTransformer())
-    ->addRule(new RequiredRule()))
-  ->add((new FieldDefinition('email', [FieldRole::SenderEmail]))
-    ->addFilter(new SanitizeEmailFilter(strict: true))
-    ->addRule(new RequiredRule())
-    ->addRule(new EmailRule()))
-  ->add((new FieldDefinition('message', [FieldRole::Body]))
-    ->addRule(new RequiredRule()));
-
-$mailer = new PHPMailerAdapter(
-  useSmtp: true,
-  host: 'mail.example.com',
-  username: 'no-reply@example.com',
-  password: 'secret',
-  fromEmail: 'no-reply@example.com',
-  fromName: 'Website Contact Form'
-);
-
-new FormToEmailController($form, $mailer, ['contact@example.com'])->handle();
-```
-
-Example usage:
-```php
-$form = new FormDefinition()
-    ->add(new FieldDefinition('name', roles: [FieldRole::SenderName], processors: [
-        new TrimTransformer(), // trim leading/trailing spaces
-        new RequiredRule(), // required rule
-    ]))
-    ->add(new FieldDefinition('email', roles: [FieldRole::SenderEmail], processors: [
-        new SanitizeEmailFilter(), // sanitize email
-        new EmailRule(), // validate email
-        new LowercaseTransformer(), // lower case email
-    ]));
-    ->add(new FieldDefinition('message', roles: [FieldRole::Body], processors: [
-        new RemoveUrlFilter(), // remove url
-        new RemoveEmojiFilter(), // remove emoji
-        new StripTagsFilter(), // strip html tags
-        new RequiredRule(), // required rule
-        new HtmlEscapeFilter(), // encode html to prevent XSS
-    ]));
-
-$mailer = new PHPMailerAdapter(
-  useSmtp: true,
-  host: 'mail.example.com',
-  username: 'no-reply@example.com',
-  password: 'secret',
-  fromEmail: 'no-reply@example.com',
-  fromName: 'Website Contact Form'
-);
-
-new FormToEmailController($form, $mailer, ['contact@example.com'])->handle();
-```
-
----
-
 ## 🧩 Advanced configuration
+
+### Builtin adapters
+
+### Builtin filters
+
+### Builtin rules
+
+### Builtin transformers
 
 ### Processor Order
 
