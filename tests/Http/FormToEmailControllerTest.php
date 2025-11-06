@@ -4,51 +4,71 @@ declare(strict_types=1);
 
 namespace FormToEmail\Tests\Http;
 
-use FormToEmail\Core\FieldDefinition;
-use FormToEmail\Core\FormDefinition;
-use FormToEmail\Enum\FieldRole;
+use FormToEmail\Core\{
+    FieldDefinition,
+    FormDefinition,
+    Logger
+};
+use FormToEmail\Enum\{
+    FieldRole,
+    LogFormat
+};
 use FormToEmail\Http\FormToEmailController;
-use FormToEmail\Rule\EmailRule;
-use FormToEmail\Rule\RequiredRule;
+use FormToEmail\Mail\MailPayload;
+use FormToEmail\Rule\{
+    EmailRule,
+    RequiredRule
+};
 use FormToEmail\Tests\Fake\FakeMailerAdapter;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 /**
- * Integration test for FormToEmailController.
+ * Integration tests for FormToEmailController.
  *
- * Uses the test-safe handleRequest() method (no exit()).
+ * Uses handleRequest() to avoid exit() and validate logic deterministically.
  */
 final class FormToEmailControllerTest extends TestCase
 {
-    public function testControllerReturnsOkAndSendsEmail(): void
+    private function makeForm(): FormDefinition
     {
-        // Prepare a minimal valid form
-        $form = new FormDefinition()
+        return (new FormDefinition())
             ->add(new FieldDefinition(
                 'email',
                 roles: [FieldRole::SenderEmail],
                 processors: [new RequiredRule(), new EmailRule()]
+            ))
+            ->add(new FieldDefinition(
+                'name',
+                roles: [FieldRole::SenderName],
+                processors: [new RequiredRule()]
             ));
-        
-        // Fake mailer avoids real SMTP
+    }
+    
+    // ---------------------------------------------------------------------
+    // Core Scenarios
+    // ---------------------------------------------------------------------
+    
+    public function testControllerReturnsOkAndSendsEmail(): void
+    {
+        $form = $this->makeForm();
         $mailer = new FakeMailerAdapter();
         
-        // Instantiate controller with test recipients
         $controller = new FormToEmailController(
             form: $form,
             mailer: $mailer,
             recipients: ['contact@example.com']
         );
         
-        // Simulate a POST request with valid JSON body
         $response = $controller->handleRequest(
             server: ['REQUEST_METHOD' => 'POST'],
-            rawBody: json_encode(['email' => 'moi@jturbide.com'])
+            rawBody: json_encode(['email' => 'moi@jturbide.com', 'name' => 'Julien'])
         );
         
-        $this->assertSame(['code' => 'ok'], $response);
-        $this->assertCount(1, $mailer->sent);
-        $this->assertSame('moi@jturbide.com', $mailer->sent[0]->replyToEmail);
+        self::assertSame(['code' => 'ok'], $response);
+        self::assertCount(1, $mailer->sent);
+        self::assertInstanceOf(MailPayload::class, $mailer->sent[0]);
+        self::assertSame('moi@jturbide.com', $mailer->sent[0]->replyToEmail);
     }
     
     public function testControllerReturnsInvalidJson(): void
@@ -62,7 +82,7 @@ final class FormToEmailControllerTest extends TestCase
             rawBody: 'not-json'
         );
         
-        $this->assertSame(['code' => 'invalid_json'], $response);
+        self::assertSame(['code' => 'invalid_json'], $response);
     }
     
     public function testControllerReturnsInvalidMethod(): void
@@ -76,12 +96,12 @@ final class FormToEmailControllerTest extends TestCase
             rawBody: json_encode([])
         );
         
-        $this->assertSame(['code' => 'invalid_method'], $response);
+        self::assertSame(['code' => 'invalid_method'], $response);
     }
     
     public function testControllerReturnsValidationError(): void
     {
-        $form = new FormDefinition()
+        $form = (new FormDefinition())
             ->add(new FieldDefinition('email', processors: [new RequiredRule(), new EmailRule()]));
         
         $mailer = new FakeMailerAdapter();
@@ -92,7 +112,137 @@ final class FormToEmailControllerTest extends TestCase
             rawBody: json_encode(['email' => 'not-an-email'])
         );
         
-        $this->assertSame('validation_error', $response['code']);
-        $this->assertArrayHasKey('email', $response['errors']);
+        self::assertSame('validation_error', $response['code']);
+        self::assertArrayHasKey('email', $response['errors']);
+    }
+    
+    // ---------------------------------------------------------------------
+    // Additional / Edge Scenarios
+    // ---------------------------------------------------------------------
+    
+    public function testControllerHandlesMailFailureGracefully(): void
+    {
+        $form = $this->makeForm();
+        
+        $mailer = new FakeMailerAdapter();
+        $mailer->throwOnSend = true;
+        
+        $controller = new FormToEmailController($form, $mailer, ['contact@example.com']);
+        
+        $response = $controller->handleRequest(
+            server: ['REQUEST_METHOD' => 'POST'],
+            rawBody: json_encode(['email' => 'test@domain.com', 'name' => 'X'])
+        );
+        
+        self::assertSame(['code' => 'mail_failure'], $response);
+    }
+    
+    public function testControllerHandlesOptionsPreflight(): void
+    {
+        $form = new FormDefinition();
+        $mailer = new FakeMailerAdapter();
+        $controller = new FormToEmailController($form, $mailer, ['contact@example.com']);
+        
+        $response = $controller->handleRequest(server: ['REQUEST_METHOD' => 'OPTIONS']);
+        self::assertSame(['code' => 'ok'], $response);
+    }
+    
+    public function testControllerReturnsOkWithLoggerEnabled(): void
+    {
+        $form = $this->makeForm();
+        $mailer = new FakeMailerAdapter();
+        
+        // In-memory logger writes to temp file to simulate real logging
+        $logFile = tempnam(sys_get_temp_dir(), 'formlog_');
+        $logger = new Logger(
+            enabled: true,
+            file: $logFile,
+            format: LogFormat::Json
+        );
+        
+        $controller = new FormToEmailController(
+            form: $form,
+            mailer: $mailer,
+            recipients: ['contact@example.com'],
+            logger: $logger
+        );
+        
+        $response = $controller->handleRequest(
+            server: ['REQUEST_METHOD' => 'POST'],
+            rawBody: json_encode(['email' => 'success@site.com', 'name' => 'Valid'])
+        );
+        
+        self::assertSame(['code' => 'ok'], $response);
+        $contents = trim((string) file_get_contents($logFile));
+        
+        // At least one JSON log line
+        self::assertStringContainsString('"message"', $contents);
+        self::assertStringContainsString('form submission', strtolower($contents));
+        
+        @unlink($logFile);
+    }
+    
+    public function testControllerLogsValidationFailure(): void
+    {
+        $form = (new FormDefinition())
+            ->add(new FieldDefinition('email', processors: [new RequiredRule(), new EmailRule()]));
+        
+        $mailer = new FakeMailerAdapter();
+        $logFile = tempnam(sys_get_temp_dir(), 'formlog_');
+        $logger = new Logger(enabled: true, file: $logFile, format: LogFormat::Text);
+        
+        $controller = new FormToEmailController($form, $mailer, ['contact@example.com'], logger: $logger);
+        
+        $response = $controller->handleRequest(
+            server: ['REQUEST_METHOD' => 'POST'],
+            rawBody: json_encode(['email' => 'invalid'])
+        );
+        
+        self::assertSame('validation_error', $response['code']);
+        $contents = trim((string) file_get_contents($logFile));
+        self::assertStringContainsString('validation failed', strtolower($contents));
+        
+        @unlink($logFile);
+    }
+    
+    public function testControllerLogsMailFailureException(): void
+    {
+        $form = $this->makeForm();
+        
+        $mailer = new FakeMailerAdapter();
+        $mailer->throwOnSend = true;
+        
+        $logFile = tempnam(sys_get_temp_dir(), 'formlog_');
+        $logger = new Logger(enabled: true, file: $logFile, format: LogFormat::Text);
+        
+        $controller = new FormToEmailController(
+            form: $form,
+            mailer: $mailer,
+            recipients: ['contact@example.com'],
+            logger: $logger
+        );
+        
+        $response = $controller->handleRequest(
+            server: ['REQUEST_METHOD' => 'POST'],
+            rawBody: json_encode(['email' => 'demo@domain.com', 'name' => 'X'])
+        );
+        
+        self::assertSame(['code' => 'mail_failure'], $response);
+        
+        $contents = strtolower(trim((string) file_get_contents($logFile)));
+        self::assertStringContainsString('submission failed', $contents);
+        self::assertStringContainsString('runtimeexception', $contents);
+        
+        @unlink($logFile);
+    }
+    
+    public function testControllerCanHandleEmptyBody(): void
+    {
+        $form = new FormDefinition();
+        $mailer = new FakeMailerAdapter();
+        $controller = new FormToEmailController($form, $mailer, ['contact@example.com']);
+        
+        $response = $controller->handleRequest(server: ['REQUEST_METHOD' => 'POST'], rawBody: '');
+        self::assertSame(['code' => 'invalid_json'], $response);
     }
 }
