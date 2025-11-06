@@ -25,7 +25,7 @@ final class ValidationTest extends TestCase
     public function testEmptyFormProducesValidResult(): void
     {
         $form = new FormDefinition();
-        $result = $form->validate([]);
+        $result = $form->process([]);
         
         $this->assertInstanceOf(ValidationResult::class, $result);
         $this->assertTrue($result->valid);
@@ -58,7 +58,7 @@ final class ValidationTest extends TestCase
         
         $form->add($field);
         
-        $result = $form->validate(['username' => 'xy']);
+        $result = $form->process(['username' => 'xy']);
         
         $this->assertInstanceOf(ValidationResult::class, $result);
         $this->assertFalse($result->valid);
