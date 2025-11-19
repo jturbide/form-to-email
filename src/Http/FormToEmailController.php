@@ -74,7 +74,13 @@ final readonly class FormToEmailController
      *
      * @return array{
      *     code: string,
-     *     errors?: array<string, list<ValidationError>>
+     *     errors?: array<string, list<array{
+     *       code: string,
+     *       message: string,
+     *       context: array<string, mixed>,
+     *       field: string|null
+     *     } | string>>,
+     *     messages?: array<string, list<string>>
      * }
      */
     public function handleRequest(?array $server = null, ?string $rawBody = null): array
@@ -107,12 +113,16 @@ final readonly class FormToEmailController
         $result = $this->form->process($input);
         
         if ($result->failed()) {
+            $errors = $result->toArray()['errors'];
+            $messages = $result->messagesAll();
+            
             // Log validation errors with structured field data.
-            $this->logger?->recordValidationErrors($result->allErrors());
+            $this->logger?->recordValidationErrors($messages);
             
             return [
                 'code' => ResponseCode::VALIDATION_ERROR->value,
-                'errors' => $result->allErrors(),
+                'errors' => $errors,
+                'messages' => $messages,
             ];
         }
         
