@@ -87,7 +87,7 @@ final class TemplateRenderer
     {$rows}
   </table>
   <p style="font-size:12px;color:#777;margin-top:20px;">
-    Sent automatically by form-to-email library.
+    Sent automatically by jturbide/form-to-email library.
   </p>
 </body>
 </html>
